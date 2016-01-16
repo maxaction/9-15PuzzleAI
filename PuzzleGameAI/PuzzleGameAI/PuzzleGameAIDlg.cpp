@@ -6,6 +6,8 @@
 #include "PuzzleGameAI.h"
 #include "PuzzleGameAIDlg.h"
 #include "afxdialogex.h"
+#include <vector>
+#include <string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -28,8 +30,16 @@ void CPuzzleGameAIDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CPuzzleGameAIDlg, CDialogEx)
-	ON_WM_PAINT()
-	ON_WM_QUERYDRAGICON()
+
+	ON_BN_CLICKED(IDC_PLAYER_HUMAN, OnHumanSelect)
+	ON_BN_CLICKED(IDC_PLAYER_AI_DFS, OnAIBreadth)
+	ON_BN_CLICKED(IDC_PLAYER_AI_ASM, OnAIAStarManhattan)
+	ON_BN_CLICKED(IDC_PLAYER_AI_ASP, OnAIAStarPattern)
+
+	ON_BN_CLICKED(IDC_SIZE_8, OnSize8Select)
+	ON_BN_CLICKED(IDC_SIZE_15, OnSize15Select)
+
+	ON_WM_HSCROLL()
 END_MESSAGE_MAP()
 
 
@@ -46,42 +56,149 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 
+	CSliderCtrl* pSlider = (CSliderCtrl*)GetDlgItem(IDC_AI_SPEED);
+	if(pSlider)
+	{
+		pSlider->SetRange(0,5000, TRUE);
+	}
+
+
+	CWnd* Lable = GetDlgItem(IDC_SECONDS);
+	if (Lable)
+	{
+		std::wstring text = std::to_wstring(m_AiSpeed) + L" ms";
+		Lable->SetWindowText(text.c_str());
+	}
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-// If you add a minimize button to your dialog, you will need the code below
-//  to draw the icon.  For MFC applications using the document/view model,
-//  this is automatically done for you by the framework.
-
-void CPuzzleGameAIDlg::OnPaint()
+void CPuzzleGameAIDlg::OnHumanSelect()
 {
-	if (IsIconic())
+	OnPlayerSelectChange(IDC_PLAYER_HUMAN);
+}
+void CPuzzleGameAIDlg::OnAIBreadth()
+{
+	OnPlayerSelectChange(IDC_PLAYER_AI_DFS);
+}
+void CPuzzleGameAIDlg::OnAIAStarManhattan()
+{
+	OnPlayerSelectChange(IDC_PLAYER_AI_ASM);
+}
+void CPuzzleGameAIDlg::OnAIAStarPattern()
+{
+	OnPlayerSelectChange(IDC_PLAYER_AI_ASP);
+}
+
+void CPuzzleGameAIDlg::OnPlayerSelectChange(UINT CtrlID)
+{
+	SetPlayerSelectRadio(CtrlID);
+	switch (CtrlID)
 	{
-		CPaintDC dc(this); // device context for painting
+	case IDC_PLAYER_HUMAN:
+		
+		break;
 
-		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// Center icon in client rectangle
-		int cxIcon = GetSystemMetrics(SM_CXICON);
-		int cyIcon = GetSystemMetrics(SM_CYICON);
-		CRect rect;
-		GetClientRect(&rect);
-		int x = (rect.Width() - cxIcon + 1) / 2;
-		int y = (rect.Height() - cyIcon + 1) / 2;
+	default:
+		break;
+	}
+}
 
-		// Draw the icon
-		dc.DrawIcon(x, y, m_hIcon);
+void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
+{
+	std::vector<UINT> IDs = {IDC_PLAYER_HUMAN,
+							 IDC_PLAYER_AI_DFS,
+							 IDC_PLAYER_AI_ASM,
+							 IDC_PLAYER_AI_ASP};
+	for(auto ID : IDs)
+	{
+		if(ID== CtrlID)
+		{
+			CButton* pBtn = (CButton*)GetDlgItem(ID);
+			if(pBtn)
+			{
+				pBtn->SetCheck(TRUE);
+			}
+		}
+		else
+		{
+			CButton* pBtn = (CButton*)GetDlgItem(ID);
+			if (pBtn)
+			{
+				pBtn->SetCheck(FALSE);
+			}
+		}
+
+	}
+}
+
+
+
+void CPuzzleGameAIDlg::OnSize8Select()
+{
+	OnSizeChange(IDC_SIZE_8);
+}
+void CPuzzleGameAIDlg::OnSize15Select()
+{
+	OnSizeChange(IDC_SIZE_15);
+}
+
+void CPuzzleGameAIDlg::OnSizeChange(UINT CtrlID)
+{
+	if (CtrlID == IDC_SIZE_8)
+	{
+		CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+		if (pBtn)
+		{
+			pBtn->SetCheck(TRUE);
+		}
+
+		pBtn = (CButton*)GetDlgItem(IDC_SIZE_15);
+		if (pBtn)
+		{
+			pBtn->SetCheck(FALSE);
+		}
 	}
 	else
 	{
-		CDialogEx::OnPaint();
+		CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+		if (pBtn)
+		{
+			pBtn->SetCheck(FALSE);
+		}
+
+		pBtn = (CButton*)GetDlgItem(IDC_SIZE_15);
+		if (pBtn)
+		{
+			pBtn->SetCheck(TRUE);
+		}
 	}
 }
 
-// The system calls this function to obtain the cursor to display while the user drags
-//  the minimized window.
-HCURSOR CPuzzleGameAIDlg::OnQueryDragIcon()
+void CPuzzleGameAIDlg::SetSize()
 {
-	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+
+void CPuzzleGameAIDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CSliderCtrl* pSliderCtrl = (CSliderCtrl*)pScrollBar;
+
+	if(pSliderCtrl)
+	{
+		m_AiSpeed = nPos;
+		CWnd* Lable = GetDlgItem(IDC_SECONDS);
+		if(Lable)
+		{
+			std::wstring text = std::to_wstring(m_AiSpeed) + L" ms";
+			Lable->SetWindowText(text.c_str());
+		}
+	}
+
+	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
+}

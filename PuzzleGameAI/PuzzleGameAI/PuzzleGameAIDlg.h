@@ -25,7 +25,28 @@ protected:
 
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
-	afx_msg void OnPaint();
-	afx_msg HCURSOR OnQueryDragIcon();
+
+	afx_msg void OnSize8Select();
+	afx_msg void OnSize15Select();
+
+	void OnSizeChange(UINT CtrlID);
+	
+	void SetSize();
+
+	afx_msg void OnHumanSelect();
+	afx_msg void OnAIBreadth();
+	afx_msg void OnAIAStarManhattan();
+	afx_msg void OnAIAStarPattern();
+
+	void OnPlayerSelectChange(UINT CtrlID);
+	void SetPlayerSelectRadio(UINT CtrlID);
+
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+
+
+
+private:
+	int m_AiSpeed = 0;
 };
