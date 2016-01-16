@@ -1,8 +1,9 @@
 
 // PuzzleGameAIDlg.h : header file
 //
-
 #pragma once
+#include <vector>
+#include <string>
 
 
 // CPuzzleGameAIDlg dialog
@@ -14,6 +15,7 @@ public:
 
 // Dialog Data
 	enum { IDD = IDD_PUZZLEGAMEAI_DIALOG };
+
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -41,6 +43,11 @@ protected:
 	void OnPlayerSelectChange(UINT CtrlID);
 	void SetPlayerSelectRadio(UINT CtrlID);
 
+	void resetBoard();
+	void RedrawPuzzle();
+
+	
+
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
@@ -49,4 +56,7 @@ public:
 
 private:
 	int m_AiSpeed = 0;
+	
+	std::vector<std::vector<int>> m_boardValues;
+	
 };

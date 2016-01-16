@@ -6,8 +6,7 @@
 #include "PuzzleGameAI.h"
 #include "PuzzleGameAIDlg.h"
 #include "afxdialogex.h"
-#include <vector>
-#include <string>
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -16,6 +15,10 @@
 
 // CPuzzleGameAIDlg dialog
 
+const UINT PuzzleIDs[4][4] = { { IDC_PUZZLE_0_0, IDC_PUZZLE_0_1, IDC_PUZZLE_0_2, IDC_PUZZLE_0_3 },
+							   { IDC_PUZZLE_1_0, IDC_PUZZLE_1_1, IDC_PUZZLE_1_2, IDC_PUZZLE_1_3 },
+							   { IDC_PUZZLE_2_0, IDC_PUZZLE_2_1, IDC_PUZZLE_2_2, IDC_PUZZLE_2_3 },
+							   { IDC_PUZZLE_3_0, IDC_PUZZLE_3_1, IDC_PUZZLE_3_2, IDC_PUZZLE_3_3 }};
 
 
 CPuzzleGameAIDlg::CPuzzleGameAIDlg(CWnd* pParent /*=NULL*/)
@@ -69,6 +72,8 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 		std::wstring text = std::to_wstring(m_AiSpeed) + L" ms";
 		Lable->SetWindowText(text.c_str());
 	}
+
+	resetBoard();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -174,6 +179,8 @@ void CPuzzleGameAIDlg::OnSizeChange(UINT CtrlID)
 			pBtn->SetCheck(TRUE);
 		}
 	}
+
+	resetBoard();
 }
 
 void CPuzzleGameAIDlg::SetSize()
@@ -202,3 +209,198 @@ void CPuzzleGameAIDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
 }
+
+
+void CPuzzleGameAIDlg::resetBoard()
+{
+	for(auto &Row : m_boardValues)
+	{
+		Row.clear();
+	}
+
+	m_boardValues.clear();
+
+	CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+
+	if (pBtn && pBtn->GetCheck())
+	{
+		int Number = 1;
+		for (int col = 0; col < 3; ++col)
+		{
+			std::vector<int> row;
+			for (int idx = 0; idx < 3; ++idx)
+			{
+				if (idx == 2 && col == 2)
+				{
+					row.push_back(0);
+				}
+				else
+				{
+					row.push_back(Number);
+				}
+				++Number;
+				
+			}
+			m_boardValues.push_back(row);
+		}
+		
+		CWnd* pWnd = GetDlgItem(IDC_PUZZLE_0_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_1_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_2_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_0);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_1);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_2);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_HIDE);
+
+
+
+	}
+	else
+		
+	{
+		int Number = 1;
+		for (int col = 0; col < 4; ++col)
+		{
+			std::vector<int> row;
+			for (int idx = 0; idx < 4; ++idx)
+			{
+				if (idx == 3 && col == 3)
+				{
+					row.push_back(0);
+				}
+				else
+				{
+					row.push_back(Number);
+				}
+				++Number;
+			}
+			m_boardValues.push_back(row);
+		}
+		CWnd* pWnd = GetDlgItem(IDC_PUZZLE_0_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_1_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_2_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_0);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_1);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_2);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+
+		pWnd = GetDlgItem(IDC_PUZZLE_3_3);
+		if (pWnd)
+			pWnd->ShowWindow(SW_SHOW);
+	}
+	RedrawPuzzle();
+}
+
+void CPuzzleGameAIDlg::RedrawPuzzle()
+{
+	if (m_boardValues.size() <2)
+		return;
+
+	CWnd* pWnd = GetDlgItem(IDC_PUZZLE_0_0);
+	if(pWnd)
+		pWnd->SetWindowText(std::to_wstring(m_boardValues[0][0]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_0_1);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[0][1]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_0_2);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[0][2]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_1_0);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[1][0]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_1_1);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[1][1]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_1_2);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[1][2]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_2_0);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[2][0]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_2_1);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[2][1]).c_str());
+
+	 pWnd = GetDlgItem(IDC_PUZZLE_2_2);
+		if (pWnd)
+			pWnd->SetWindowText(std::to_wstring(m_boardValues[2][2]).c_str());
+
+
+	CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+
+	if (pBtn && !pBtn->GetCheck())
+	{
+		 pWnd = GetDlgItem(IDC_PUZZLE_0_3);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[0][3]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_1_3);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[1][3]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_2_3);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[2][3]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_3_0);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[3][0]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_3_1);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[3][1]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_3_2);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[3][2]).c_str());
+
+		 pWnd = GetDlgItem(IDC_PUZZLE_3_3);
+			if (pWnd)
+				pWnd->SetWindowText(std::to_wstring(m_boardValues[3][3]).c_str());
+	}
+
+}
+
