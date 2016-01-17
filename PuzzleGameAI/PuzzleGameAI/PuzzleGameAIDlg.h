@@ -16,6 +16,8 @@ public:
 // Dialog Data
 	enum { IDD = IDD_PUZZLEGAMEAI_DIALOG };
 
+	bool CheckWin();
+
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -28,24 +30,19 @@ protected:
 	// Generated message map functions
 	virtual BOOL OnInitDialog();
 
-	afx_msg void OnSize8Select();
-	afx_msg void OnSize15Select();
-
-	void OnSizeChange(UINT CtrlID);
+	afx_msg void OnSizeChange(UINT id);
 	
 	void SetSize();
 
-	afx_msg void OnHumanSelect();
-	afx_msg void OnAIBreadth();
-	afx_msg void OnAIAStarManhattan();
-	afx_msg void OnAIAStarPattern();
+	afx_msg void OnPlayerSelectChange(UINT id);
 
-	void OnPlayerSelectChange(UINT CtrlID);
+	afx_msg void OnPuzzleClick(UINT id);
 	void SetPlayerSelectRadio(UINT CtrlID);
 
 	void resetBoard();
 	void RedrawPuzzle();
 
+	void SetButtons();
 	
 
 	DECLARE_MESSAGE_MAP()
@@ -58,5 +55,7 @@ private:
 	int m_AiSpeed = 0;
 	
 	std::vector<std::vector<int>> m_boardValues;
+
+	bool m_bGameRunning = false;
 	
 };
