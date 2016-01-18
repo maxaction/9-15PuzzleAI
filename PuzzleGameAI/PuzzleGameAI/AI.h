@@ -17,6 +17,10 @@ public:
 	void SetAISpeed(int milliseconds) { m_nSpeed = milliseconds;}
 
 protected:
+
+
+	void SendClick(UINT ClickID);
+
 	CPuzzleGameAIDlg* m_pParent;
 
 	BoardInfo m_BoardView;

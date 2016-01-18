@@ -33,6 +33,7 @@ BEGIN_MESSAGE_MAP(CPuzzleGameAIDlg, CDialogEx)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_PLAYER_AI_DFS, IDC_PLAYER_AI_ASP, OnPlayerSelectChange)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_SIZE_8, IDC_SIZE_15, OnSizeChange)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_PUZZLE_0_0, IDC_PUZZLE_3_3, OnPuzzleClick)
+	ON_MESSAGE(AI_BTN_CLICK, OnAIClick)
 	ON_WM_HSCROLL()
 	ON_BN_CLICKED(IDC_SUFFLE, &CPuzzleGameAIDlg::OnBnClickedSuffle)
 END_MESSAGE_MAP()
@@ -71,7 +72,7 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 
 	resetBoard();
 
-	srand(time(NULL));
+	srand((UINT)time(NULL));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -117,7 +118,7 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 
 			if(ID == IDC_PLAYER_AI_DFS)
 			{
-				AI = std::make_shared<CAIBreadth>(this);
+				m_pAI = std::make_shared<CAIBreadth>(this);
 			}
 			if (ID == IDC_PLAYER_AI_ASM)
 			{
@@ -179,9 +180,7 @@ void CPuzzleGameAIDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 {
 	// TODO: Add your message handler code here and/or call default
 
-	CSliderCtrl* pSliderCtrl = (CSliderCtrl*)pScrollBar;
-
-	if(pSliderCtrl)
+	if(pScrollBar->m_hWnd == GetDlgItem(IDC_AI_SPEED)->m_hWnd)
 	{
 		m_AiSpeed = nPos;
 		CWnd* Lable = GetDlgItem(IDC_SECONDS);
@@ -190,6 +189,12 @@ void CPuzzleGameAIDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 			std::wstring text = std::to_wstring(m_AiSpeed) + L" ms";
 			Lable->SetWindowText(text.c_str());
 		}
+		if (m_bAIPlaying && m_pAI)
+		{
+			m_pAI->SetAISpeed(m_AiSpeed);
+		}
+
+
 	}
 
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
@@ -300,39 +305,16 @@ void CPuzzleGameAIDlg::RedrawPuzzle()
 	if (m_boardValues.size() <2)
 		return;
 
-	for (int x = 0; x < 3; ++x)
+	for (UINT x = 0; x < m_boardValues.size(); ++x)
 	{
-		for(int y = 0; y < 3; ++y)
+		for (UINT y = 0; y < m_boardValues[x].size(); ++y)
 		{
 			CWnd* pWnd = GetDlgItem(PuzzleIDs[x][y]);
 			if (pWnd)
 				pWnd->SetWindowText(std::to_wstring(m_boardValues[x][y]).c_str());
 		}
 	}
-	CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
-	if (pBtn && !pBtn->GetCheck())
-	{
 
-		for (int x = 0; x < 4; ++x)
-		{
-			if (x == 3)
-			{
-				for (int y = 0; y < 4; ++y)
-				{
-					CWnd* pWnd = GetDlgItem(PuzzleIDs[x][y]);
-					if (pWnd)
-						pWnd->SetWindowText(std::to_wstring(m_boardValues[x][y]).c_str());
-				}
-			}
-			else
-			{
-
-				CWnd* pWnd = GetDlgItem(PuzzleIDs[x][3]);
-				if (pWnd)
-					pWnd->SetWindowText(std::to_wstring(m_boardValues[x][3]).c_str());
-			}
-		}
-	}
 	SetButtons();
 }
 
@@ -344,9 +326,10 @@ void CPuzzleGameAIDlg::OnPuzzleClick(UINT id)
 
 	int ClickIndex_X = 0, ClickIndex_Y = 0, 
 		EmptyIndex_X = 0, EmptyIndex_Y = 0;
-	for (int x = 0; x < 4; ++x)
+
+	for (UINT x = 0; x < m_boardValues.size(); ++x)
 	{
-		for (int y = 0; y <4; ++y)
+		for (UINT y = 0; y <m_boardValues[x].size(); ++y)
 		{
 			if (PuzzleIDs[x][y] == id)
 			{
@@ -376,6 +359,11 @@ void CPuzzleGameAIDlg::OnPuzzleClick(UINT id)
 
 	CheckWin();
 
+	if (m_bAIPlaying && m_pAI)
+	{
+		m_pAI->UpdateBoardView(m_boardValues);
+	}
+
 }
 
 
@@ -383,9 +371,9 @@ void CPuzzleGameAIDlg::SetButtons()
 {
 	int EmptyIndex_X=0, EmptyIndex_Y=0;
 
-	for(int x = 0; x < 4; ++x)
+	for (UINT x = 0; x < m_boardValues.size(); ++x)
 	{
-		for(int y=0; y <4; ++y)
+		for (UINT y = 0; y <m_boardValues[x].size(); ++y)
 		{
 			CWnd* pWnd = GetDlgItem(PuzzleIDs[x][y]);
 			if (pWnd && pWnd->IsWindowVisible())
@@ -438,56 +426,26 @@ bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
 
 	bool bGameWon = true;
 
-	CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
-
-	if (pBtn && pBtn->GetCheck())
+	int Number = 1;
+	for (UINT col = 0; col < board.size(); ++col)
 	{
-		int Number = 1;
-		for (int col = 0; col < 3; ++col)
+		std::vector<int> row;
+		for (UINT idx = 0; idx < board[col].size(); ++idx)
 		{
-			std::vector<int> row;
-			for (int idx = 0; idx < 3; ++idx)
+			if (idx == 2 && col == 2)
 			{
-				if (idx == 2 && col == 2)
-				{
-					if (board[col][idx] != 0)
-						bGameWon = false;
-				}
-				else
-				{
-					if (board[col][idx] != Number)
-						bGameWon = false;
-				}
-				++Number;
-
+				if (board[col][idx] != 0)
+					bGameWon = false;
 			}
-			board.push_back(row);
-		}
-
-	}
-
-	else
-	{
-		int Number = 1;
-		for (int col = 0; col < 4; ++col)
-		{
-			std::vector<int> row;
-			for (int idx = 0; idx < 4; ++idx)
+			else
 			{
-				if (idx == 3 && col == 3)
-				{
-					if (board[col][idx] != 0)
-						bGameWon = false;
-				}
-				else
-				{
-					if (board[col][idx] != Number)
-						bGameWon = false;
-				}
-				++Number;
+				if (board[col][idx] != Number)
+					bGameWon = false;
 			}
-			board.push_back(row);
+			++Number;
+
 		}
+		board.push_back(row);
 	}
 
 	return bGameWon;
@@ -526,17 +484,17 @@ void CPuzzleGameAIDlg::OnBnClickedSuffle()
 
 void CPuzzleGameAIDlg::StartGame()
 {
-	for (int x = 0; x < 4; ++x)
+	for (UINT x = 0; x < m_boardValues.size(); ++x)
 	{
-		for (int y = 0; y <4; ++y)
+		for (UINT y = 0; y <m_boardValues[x].size(); ++y)
 		{
 			
 			CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[x][y]);
 			if (pWnd && pWnd->IsWindowVisible())
 			{
 				int CurrentValue = m_boardValues[x][y],
-					randX = rand() % 3,
-					randY = rand() % 3;
+					randX = rand() % m_boardValues.size(),
+					randY = rand() % m_boardValues[x].size();
 
 				m_boardValues[x][y] = m_boardValues[randX][randY];
 				m_boardValues[randX][randY] = CurrentValue;
@@ -595,6 +553,11 @@ void CPuzzleGameAIDlg::StartGame()
 	RedrawPuzzle();
 
 	m_bGameRunning = true;
+
+	if (m_bAIPlaying && m_pAI)
+	{
+		m_pAI->Startgame(m_boardValues);
+	}
 }
 
 void CPuzzleGameAIDlg::EndGame()
@@ -644,4 +607,14 @@ void CPuzzleGameAIDlg::EndGame()
 	m_bGameRunning = false;
 
 	resetBoard();
+}
+
+LRESULT CPuzzleGameAIDlg::OnAIClick(WPARAM wParam, LPARAM lParam)
+{
+	UINT ClickID = static_cast<UINT>(wParam);
+
+
+	OnPuzzleClick(ClickID);
+
+	return 0;
 }

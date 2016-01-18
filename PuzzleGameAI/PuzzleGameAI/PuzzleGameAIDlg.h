@@ -8,11 +8,14 @@
 #include "AI.h"
 #include "resource.h"
 
+#define AI_BTN_CLICK  (WM_USER + 100)
 
 const static UINT PuzzleIDs[4][4] = { { IDC_PUZZLE_0_0, IDC_PUZZLE_0_1, IDC_PUZZLE_0_2, IDC_PUZZLE_0_3 },
 { IDC_PUZZLE_1_0, IDC_PUZZLE_1_1, IDC_PUZZLE_1_2, IDC_PUZZLE_1_3 },
 { IDC_PUZZLE_2_0, IDC_PUZZLE_2_1, IDC_PUZZLE_2_2, IDC_PUZZLE_2_3 },
 { IDC_PUZZLE_3_0, IDC_PUZZLE_3_1, IDC_PUZZLE_3_2, IDC_PUZZLE_3_3 } };
+
+
 
 // CPuzzleGameAIDlg dialog
 class CPuzzleGameAIDlg : public CDialogEx
@@ -31,7 +34,8 @@ public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnPuzzleClick(UINT id);
 	afx_msg void OnBnClickedSuffle();
-
+	
+	bool isGameRunning() {return m_bGameRunning;}
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -46,6 +50,9 @@ protected:
 	afx_msg void OnSizeChange(UINT id);
 
 	afx_msg void OnPlayerSelectChange(UINT id);
+
+	afx_msg LRESULT OnAIClick(WPARAM wParam, LPARAM lParam);
+
 	void SetPlayerSelectRadio(UINT CtrlID);
 
 	void resetBoard();
@@ -58,14 +65,14 @@ protected:
 
 private:
 	int m_AiSpeed = 0;
-	
+
 	BoardInfo m_boardValues;
 
 	bool m_bGameRunning = false;
 
 	bool m_bAIPlaying = false;
 
-	std::shared_ptr<CAIBase> AI; 
+	std::shared_ptr<CAIBase> m_pAI; 
 
 	DECLARE_MESSAGE_MAP()
 	
