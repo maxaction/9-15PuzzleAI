@@ -430,23 +430,36 @@ bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
 	for (UINT col = 0; col < board.size(); ++col)
 	{
 		std::vector<int> row;
+
 		for (UINT idx = 0; idx < board[col].size(); ++idx)
 		{
-			if (idx == 2 && col == 2)
+			if (idx == board.size() - 1 && col == board[idx].size() - 1)
 			{
 				if (board[col][idx] != 0)
+				{
 					bGameWon = false;
+					break;
+				}
 			}
 			else
 			{
 				if (board[col][idx] != Number)
+				{
 					bGameWon = false;
+					break;
+				}
 			}
 			++Number;
-
 		}
-		board.push_back(row);
+		if(!bGameWon)
+			break;
 	}
+
+	if (bGameWon)
+	{
+		MessageBox(L"it is true");
+	}
+
 
 	return bGameWon;
 
@@ -455,7 +468,7 @@ bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
 
 void CPuzzleGameAIDlg::CheckWin()
 {
-	bool bGameWon = false;;
+	bool bGameWon = false;
 	if (m_bGameRunning)
 	{
 		bGameWon = CheckWinCondition(m_boardValues);

@@ -2,6 +2,7 @@
 #include "AI.h"
 #include <memory>
 #include <thread>
+#include <mutex>
 
 class CAIBreadth :
 	public CAIBase
@@ -26,5 +27,9 @@ protected:
 	std::thread Thread;
 
 	std::vector<std::shared_ptr<MoveInfo>> GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove);
+
+	bool isValid(std::shared_ptr<MoveInfo>);
+
+	std::vector<std::shared_ptr<MoveInfo>> m_MovesDone;
 };
 

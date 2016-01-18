@@ -47,21 +47,32 @@ void CAIBreadth::solve()
 			bSolved = true;
 			break;
 		}
-		for (auto& move : GetNextBoardStates(Q.front()))
+
+		auto Nextmoves = GetNextBoardStates(Q.front());
+std::vector<std::thread> threads;
+	
+		for (auto& move : Nextmoves)
 		{
-			Q.push(move);
+			if (isValid(move))
+			{
+				Q.push(move);
+				m_MovesDone.push_back(move);
+			}
 		}
+
+		
+
 		Q.pop();
 	}
 
 	std::stack<UINT> MessageStack;
-	while (Solution->Click && m_pParent->isGameRunning());
+	while (m_pParent->isGameRunning() && Solution && Solution->Click);
 	{
 		MessageStack.push(Solution->Click);
 		Solution = Solution->LastMove;
 	}
 
-	while (MessageStack.top() && m_pParent->isGameRunning())
+	while (m_pParent->isGameRunning() && MessageStack.top())
 	{
 		SendClick(MessageStack.top());
 		MessageStack.pop();
@@ -75,7 +86,7 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 		EmptyIndex_X = 0, EmptyIndex_Y = 0;
 
 	std::vector<std::shared_ptr<MoveInfo>> newStates;
-
+	bool found = false;
 	for (UINT x = 0; x < LastMove->Board.size(); ++x)
 	{
 		for (UINT y = 0; y <LastMove->Board[x].size(); ++y)
@@ -84,9 +95,13 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 			{
 				EmptyIndex_X = x;
 				EmptyIndex_Y = y;
+				found= true;
+				break;
 			}
 			
 		}
+		if(found)
+			break;
 	}
 
 	if (EmptyIndex_X - 1 >= 0)
@@ -100,9 +115,11 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 		newState->Click = PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y];
 
 		newState->LastMove = LastMove;
+
+
 		newStates.push_back(newState);
 	}
-	if (EmptyIndex_X + 1 < 4)
+	if (EmptyIndex_X + 1 < LastMove->Board.size())
 	{
 		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
 		newState->Board = LastMove->Board;
@@ -128,7 +145,7 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 		newState->LastMove = LastMove;
 		newStates.push_back(newState);
 	}
-	if (EmptyIndex_Y + 1 < 4)
+	if (EmptyIndex_Y + 1 < LastMove->Board[EmptyIndex_X].size())
 	{
 		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
 		newState->Board = LastMove->Board;
@@ -144,4 +161,38 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 
 	return newStates;
 
+}
+
+
+bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
+{
+	bool bValid = true;
+
+	
+
+	for (auto& PastMoves : m_MovesDone)
+	{
+		bool bisSame = true;
+
+		for (int x = 0; x < move->Board.size(); ++x)
+		{
+			for (int y = 0; y < move->Board[x].size(); ++y)
+			{
+				if (PastMoves->Board[x][y] != move->Board[x][y])
+				{
+					bisSame = false;
+					break;
+				}
+			}
+			if (!bisSame)
+				break;
+		}
+		if (bisSame)
+		{
+			bValid = false;
+			break;
+		}
+	}
+
+	return bValid;
 }
