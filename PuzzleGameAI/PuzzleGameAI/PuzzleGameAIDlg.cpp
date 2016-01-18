@@ -6,6 +6,8 @@
 #include "PuzzleGameAI.h"
 #include "PuzzleGameAIDlg.h"
 #include "afxdialogex.h"
+#include <random>
+#include "AIBreadth.h"
 
 
 #ifdef _DEBUG
@@ -14,12 +16,6 @@
 
 
 // CPuzzleGameAIDlg dialog
-
-const UINT PuzzleIDs[4][4] = { { IDC_PUZZLE_0_0, IDC_PUZZLE_0_1, IDC_PUZZLE_0_2, IDC_PUZZLE_0_3 },
-							   { IDC_PUZZLE_1_0, IDC_PUZZLE_1_1, IDC_PUZZLE_1_2, IDC_PUZZLE_1_3 },
-							   { IDC_PUZZLE_2_0, IDC_PUZZLE_2_1, IDC_PUZZLE_2_2, IDC_PUZZLE_2_3 },
-							   { IDC_PUZZLE_3_0, IDC_PUZZLE_3_1, IDC_PUZZLE_3_2, IDC_PUZZLE_3_3 }};
-
 
 CPuzzleGameAIDlg::CPuzzleGameAIDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CPuzzleGameAIDlg::IDD, pParent)
@@ -38,6 +34,7 @@ BEGIN_MESSAGE_MAP(CPuzzleGameAIDlg, CDialogEx)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_SIZE_8, IDC_SIZE_15, OnSizeChange)
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_PUZZLE_0_0, IDC_PUZZLE_3_3, OnPuzzleClick)
 	ON_WM_HSCROLL()
+	ON_BN_CLICKED(IDC_SUFFLE, &CPuzzleGameAIDlg::OnBnClickedSuffle)
 END_MESSAGE_MAP()
 
 
@@ -68,7 +65,13 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 		Lable->SetWindowText(text.c_str());
 	}
 
+	OnSizeChange(IDC_SIZE_15);
+
+	OnPlayerSelectChange(IDC_PLAYER_HUMAN);
+
 	resetBoard();
+
+	srand(time(NULL));
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -102,6 +105,27 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 			if(pBtn)
 			{
 				pBtn->SetCheck(TRUE);
+			}
+			if(ID == IDC_PLAYER_HUMAN)
+			{
+				m_bAIPlaying = false;
+			}
+			else
+			{
+				m_bAIPlaying = true;
+			}
+
+			if(ID == IDC_PLAYER_AI_DFS)
+			{
+				AI = std::make_shared<CAIBreadth>(this);
+			}
+			if (ID == IDC_PLAYER_AI_ASM)
+			{
+				//TODO: add AI for A* manhattan
+			}
+			if (ID == IDC_PLAYER_AI_ASP)
+			{
+				//TODO: add AI for A* pattarn
 			}
 		}
 		else
@@ -315,6 +339,9 @@ void CPuzzleGameAIDlg::RedrawPuzzle()
 
 void CPuzzleGameAIDlg::OnPuzzleClick(UINT id)
 {
+	if(!m_bGameRunning)
+		return;
+
 	int ClickIndex_X = 0, ClickIndex_Y = 0, 
 		EmptyIndex_X = 0, EmptyIndex_Y = 0;
 	for (int x = 0; x < 4; ++x)
@@ -347,6 +374,8 @@ void CPuzzleGameAIDlg::OnPuzzleClick(UINT id)
 
 	RedrawPuzzle();
 
+	CheckWin();
+
 }
 
 
@@ -358,11 +387,10 @@ void CPuzzleGameAIDlg::SetButtons()
 	{
 		for(int y=0; y <4; ++y)
 		{
-			CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[x][y]);
+			CWnd* pWnd = GetDlgItem(PuzzleIDs[x][y]);
 			if (pWnd && pWnd->IsWindowVisible())
 			{
 				pWnd->EnableWindow(FALSE);
-				pWnd->SetFaceColor(GetSysColor(COLOR_BTNFACE));
 
 				if(!m_boardValues[x][y])
 				{
@@ -374,7 +402,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	}
 	if (EmptyIndex_X - 1 >= 0)
 	{
-		CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y]);
+		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y]);
 		if (pWnd && pWnd->IsWindowVisible())
 		{
 			pWnd->EnableWindow(TRUE);
@@ -382,7 +410,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	}
 	if (EmptyIndex_X + 1 < 4)
 	{
-		CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[EmptyIndex_X + 1][EmptyIndex_Y]);
+		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X + 1][EmptyIndex_Y]);
 		if (pWnd && pWnd->IsWindowVisible())
 		{
 			pWnd->EnableWindow(TRUE);
@@ -390,7 +418,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	}
 	if (EmptyIndex_Y - 1 >= 0)
 	{
-		CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y - 1]);
+		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y - 1]);
 		if (pWnd && pWnd->IsWindowVisible())
 		{
 			pWnd->EnableWindow(TRUE);
@@ -398,74 +426,222 @@ void CPuzzleGameAIDlg::SetButtons()
 	}
 	if (EmptyIndex_Y + 1 < 4)
 	{
-		CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y + 1]);
+		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y + 1]);
 		if (pWnd && pWnd->IsWindowVisible())
 		{
 			pWnd->EnableWindow(TRUE);
 		}
 	}
 }
-bool CPuzzleGameAIDlg::CheckWin()
+bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
 {
+
 	bool bGameWon = true;
-	if (m_bGameRunning)
+
+	CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+
+	if (pBtn && pBtn->GetCheck())
 	{
-
-		CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
-
-		if (pBtn && pBtn->GetCheck())
+		int Number = 1;
+		for (int col = 0; col < 3; ++col)
 		{
-			int Number = 1;
-			for (int col = 0; col < 3; ++col)
+			std::vector<int> row;
+			for (int idx = 0; idx < 3; ++idx)
 			{
-				std::vector<int> row;
-				for (int idx = 0; idx < 3; ++idx)
+				if (idx == 2 && col == 2)
 				{
-					if (idx == 2 && col == 2)
-					{
-						if(m_boardValues[col][idx] != 0)
-							bGameWon = false;
-					}
-					else
-					{
-						if (m_boardValues[col][idx] != Number)
-							bGameWon = false;
-					}
-					++Number;
-
+					if (board[col][idx] != 0)
+						bGameWon = false;
 				}
-				m_boardValues.push_back(row);
-			}
+				else
+				{
+					if (board[col][idx] != Number)
+						bGameWon = false;
+				}
+				++Number;
 
+			}
+			board.push_back(row);
 		}
 
-		else
+	}
+
+	else
+	{
+		int Number = 1;
+		for (int col = 0; col < 4; ++col)
 		{
-			int Number = 1;
-			for (int col = 0; col < 4; ++col)
+			std::vector<int> row;
+			for (int idx = 0; idx < 4; ++idx)
 			{
-				std::vector<int> row;
-				for (int idx = 0; idx < 4; ++idx)
+				if (idx == 3 && col == 3)
 				{
-					if (idx == 3 && col == 3)
-					{
-						if (m_boardValues[col][idx] != 0)
-							bGameWon = false;
-					}
-					else
-					{
-						if (m_boardValues[col][idx] != Number)
-							bGameWon = false;
-					}
-					++Number;
+					if (board[col][idx] != 0)
+						bGameWon = false;
 				}
-				m_boardValues.push_back(row);
+				else
+				{
+					if (board[col][idx] != Number)
+						bGameWon = false;
+				}
+				++Number;
+			}
+			board.push_back(row);
+		}
+	}
+
+	return bGameWon;
+
+}
+
+
+void CPuzzleGameAIDlg::CheckWin()
+{
+	bool bGameWon = false;;
+	if (m_bGameRunning)
+	{
+		bGameWon = CheckWinCondition(m_boardValues);
+	}
+
+	if (bGameWon)
+	{
+		m_bGameRunning = false;
+
+		MessageBox(L"Complete");
+		EndGame();
+	}
+}
+
+void CPuzzleGameAIDlg::OnBnClickedSuffle()
+{
+	if (m_bGameRunning)
+	{
+		EndGame();
+	}
+	else
+	{
+		StartGame();
+	}
+}
+
+void CPuzzleGameAIDlg::StartGame()
+{
+	for (int x = 0; x < 4; ++x)
+	{
+		for (int y = 0; y <4; ++y)
+		{
+			
+			CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[x][y]);
+			if (pWnd && pWnd->IsWindowVisible())
+			{
+				int CurrentValue = m_boardValues[x][y],
+					randX = rand() % 3,
+					randY = rand() % 3;
+
+				m_boardValues[x][y] = m_boardValues[randX][randY];
+				m_boardValues[randX][randY] = CurrentValue;
 			}
 		}
 	}
 
-	if(bGameWon)
-		m_bGameRunning = false;
+	CWnd* pWnd = GetDlgItem(IDC_SIZE_8);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_SIZE_15);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_ASM);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_ASP);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_DFS);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_HUMAN);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(FALSE);
+	}
+	pWnd = GetDlgItem(IDC_AI_SPEED);
+	if (pWnd)
+	{
+		if (m_bAIPlaying)
+		{
+			pWnd->EnableWindow(TRUE);
+		}
+		else
+		{
+			pWnd->EnableWindow(FALSE);
+		}
+	}
 
-	return bGameWon;
+	pWnd = GetDlgItem(IDC_SUFFLE);
+	if (pWnd)
+	{
+		pWnd->SetWindowText(L"Stop/End");
+	}
+	RedrawPuzzle();
+
+	m_bGameRunning = true;
+}
+
+void CPuzzleGameAIDlg::EndGame()
+{
+	CWnd* pWnd = GetDlgItem(IDC_SIZE_8);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_SIZE_15);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_ASM);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_ASP);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_AI_DFS);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_PLAYER_HUMAN);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+	pWnd = GetDlgItem(IDC_AI_SPEED);
+	if (pWnd)
+	{
+		pWnd->EnableWindow(TRUE);
+	}
+
+	pWnd = GetDlgItem(IDC_SUFFLE);
+	if (pWnd)
+	{
+		pWnd->SetWindowText(L"Suffle");
+	}
+
+	m_bGameRunning = false;
+
+	resetBoard();
 }
