@@ -22,6 +22,10 @@ void CAIBreadth::Startgame(BoardInfo BoardStart)
 {
 	m_BoardView = BoardStart;
 	std::thread t([&](){solve();});
+
+	if(Thread.joinable())
+		Thread.join();
+
 	Thread.swap(t);
 }
 
@@ -49,7 +53,6 @@ void CAIBreadth::solve()
 		}
 
 		auto Nextmoves = GetNextBoardStates(Q.front());
-std::vector<std::thread> threads;
 	
 		for (auto& move : Nextmoves)
 		{
@@ -59,14 +62,11 @@ std::vector<std::thread> threads;
 				m_MovesDone.push_back(move);
 			}
 		}
-
-		
-
 		Q.pop();
 	}
 
 	std::stack<UINT> MessageStack;
-	while (m_pParent->isGameRunning() && Solution && Solution->Click);
+	while (m_pParent->isGameRunning() && Solution && Solution->Click)
 	{
 		MessageStack.push(Solution->Click);
 		Solution = Solution->LastMove;
