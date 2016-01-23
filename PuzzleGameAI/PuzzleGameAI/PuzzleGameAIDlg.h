@@ -33,6 +33,8 @@ public:
 
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnPuzzleClick(UINT id);
+	void UpdateState(UINT id, BoardInfo& CurrentState);
+	std::vector<UINT> GetAvailableMoves(BoardInfo& CurrentState);
 	afx_msg void OnBnClickedSuffle();
 	
 	bool isGameRunning() {return m_bGameRunning;}

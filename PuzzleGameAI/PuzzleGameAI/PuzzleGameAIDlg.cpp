@@ -14,6 +14,9 @@
 #define new DEBUG_NEW
 #endif
 
+static const int MAX_SUFFLES = 1000;
+static const int MIN_SUFFLES = 100;
+
 
 // CPuzzleGameAIDlg dialog
 
@@ -324,36 +327,7 @@ void CPuzzleGameAIDlg::OnPuzzleClick(UINT id)
 	if(!m_bGameRunning)
 		return;
 
-	int ClickIndex_X = 0, ClickIndex_Y = 0, 
-		EmptyIndex_X = 0, EmptyIndex_Y = 0;
-
-	for (UINT x = 0; x < m_boardValues.size(); ++x)
-	{
-		for (UINT y = 0; y <m_boardValues[x].size(); ++y)
-		{
-			if (PuzzleIDs[x][y] == id)
-			{
-				ClickIndex_X = x;
-				ClickIndex_Y = y;
-			}
-
-			CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[x][y]);
-			if (pWnd && pWnd->IsWindowVisible())
-			{
-				pWnd->EnableWindow(FALSE);
-				pWnd->SetFaceColor(GetSysColor(COLOR_BTNFACE));
-
-				if (!m_boardValues[x][y])
-				{
-					EmptyIndex_X = x;
-					EmptyIndex_Y = y;
-				}
-			}
-		}
-	}
-
-	m_boardValues[EmptyIndex_X][EmptyIndex_Y] = m_boardValues[ClickIndex_X][ClickIndex_Y];
-	m_boardValues[ClickIndex_X][ClickIndex_Y] = 0;
+	UpdateState(id,m_boardValues);
 
 	RedrawPuzzle();
 
@@ -427,13 +401,13 @@ bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
 	bool bGameWon = true;
 
 	int Number = 1;
-	for (UINT col = 0; col < board.size(); ++col)
+	for (UINT col = 0, lengthX = board.size(); col < board.size(); ++col)
 	{
 		std::vector<int> row;
 
-		for (UINT idx = 0; idx < board[col].size(); ++idx)
+		for (UINT idx = 0, length = board[col].size(); idx < length; ++idx)
 		{
-			if (idx == board.size() - 1 && col == board[idx].size() - 1)
+			if (idx == length - 1 && col == lengthX - 1)
 			{
 				if (board[col][idx] != 0)
 				{
@@ -497,22 +471,11 @@ void CPuzzleGameAIDlg::OnBnClickedSuffle()
 
 void CPuzzleGameAIDlg::StartGame()
 {
-	for (UINT x = 0; x < m_boardValues.size(); ++x)
+	int numberOfMoves = (rand() %(MAX_SUFFLES + MIN_SUFFLES)) + MIN_SUFFLES;
+	for (int idx = 0; idx < numberOfMoves; ++idx)
 	{
-		for (UINT y = 0; y <m_boardValues[x].size(); ++y)
-		{
-			
-			CMFCButton* pWnd = (CMFCButton*)GetDlgItem(PuzzleIDs[x][y]);
-			if (pWnd && pWnd->IsWindowVisible())
-			{
-				int CurrentValue = m_boardValues[x][y],
-					randX = rand() % m_boardValues.size(),
-					randY = rand() % m_boardValues[x].size();
-
-				m_boardValues[x][y] = m_boardValues[randX][randY];
-				m_boardValues[randX][randY] = CurrentValue;
-			}
-		}
+		auto Moves = GetAvailableMoves(m_boardValues);
+		UpdateState(Moves[rand() % Moves.size()], m_boardValues);
 	}
 
 	CWnd* pWnd = GetDlgItem(IDC_SIZE_8);
@@ -630,4 +593,81 @@ LRESULT CPuzzleGameAIDlg::OnAIClick(WPARAM wParam, LPARAM lParam)
 	OnPuzzleClick(ClickID);
 
 	return 0;
+}
+
+void CPuzzleGameAIDlg::UpdateState(UINT id, BoardInfo& CurrentState)
+{
+
+	int ClickIndex_X = 0, ClickIndex_Y = 0,
+		EmptyIndex_X = 0, EmptyIndex_Y = 0;
+
+	for (UINT x = 0; x < CurrentState.size(); ++x)
+	{
+		for (UINT y = 0; y <CurrentState[x].size(); ++y)
+		{
+			if (PuzzleIDs[x][y] == id)
+			{
+				ClickIndex_X = x;
+				ClickIndex_Y = y;
+			}
+
+			if (!CurrentState[x][y])
+			{
+				EmptyIndex_X = x;
+				EmptyIndex_Y = y;
+			}
+			
+		}
+	}
+
+	CurrentState[EmptyIndex_X][EmptyIndex_Y] = CurrentState[ClickIndex_X][ClickIndex_Y];
+	CurrentState[ClickIndex_X][ClickIndex_Y] = 0;
+
+}
+
+
+std::vector<UINT> CPuzzleGameAIDlg::GetAvailableMoves(BoardInfo& CurrentState)
+{
+	int EmptyIndex_X = 0, EmptyIndex_Y = 0;
+
+	std::vector<UINT> AvailableMoves;
+	bool found = false;
+	for (UINT x = 0, lengthX = CurrentState.size(); x < lengthX; ++x)
+	{
+		for (UINT y = 0, length = CurrentState[x].size(); y < length; ++y)
+		{
+			if (!CurrentState[x][y])
+			{
+				EmptyIndex_X = x;
+				EmptyIndex_Y = y;
+				found = true;
+				break;
+			}
+
+		}
+		if (found)
+			break;
+	}
+
+	if (EmptyIndex_X - 1 >= 0)
+	{
+		AvailableMoves.push_back(PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y]);
+	}
+	if (EmptyIndex_X + 1 < CurrentState.size())
+	{
+		AvailableMoves.push_back(PuzzleIDs[EmptyIndex_X + 1][EmptyIndex_Y]);
+
+	}
+	if (EmptyIndex_Y - 1 >= 0)
+	{
+		AvailableMoves.push_back(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y-1]);
+
+	}
+	if (EmptyIndex_Y + 1 < CurrentState[EmptyIndex_X].size())
+	{
+		AvailableMoves.push_back(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y+1]);
+
+	}
+
+	return AvailableMoves;
 }

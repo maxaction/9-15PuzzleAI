@@ -4,7 +4,13 @@
 #include <queue>
 #include <stack>
 #include <thread>
+#include <chrono>
 
+#include <conio.h>
+
+
+#define CHRONO_NOW std::chrono::high_resolution_clock::now()
+#define CHRONO_DURATION std::chrono::duration_cast<std::chrono::microseconds>
 
 CAIBreadth::CAIBreadth(CPuzzleGameAIDlg* parent): CAIBase(parent)
 {
@@ -41,10 +47,15 @@ void CAIBreadth::solve()
 
 	Q.push(start);
 
+	std::chrono::high_resolution_clock::time_point Tp = CHRONO_NOW;
+
 	std::shared_ptr<MoveInfo> Solution;
 
 	while (!bSolved && m_pParent->isGameRunning())
 	{
+#ifdef TIMING 
+		Tp = CHRONO_NOW;
+#endif
 		if(m_pParent->CheckWinCondition(Q.front()->Board))
 		{
 			Solution = Q.front();
@@ -52,15 +63,37 @@ void CAIBreadth::solve()
 			break;
 		}
 
+#ifdef TIMING 
+		if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
+			_cprintf("CheckWinCondition %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
+
+
+		Tp = CHRONO_NOW;
+#endif
 		auto Nextmoves = GetNextBoardStates(Q.front());
-	
+
+#ifdef TIMING 
+		if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
+			_cprintf("GetNextBoardStates %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
+#endif
 		for (auto& move : Nextmoves)
 		{
+#ifdef TIMING 
+			Tp = CHRONO_NOW;
+#endif
 			if (isValid(move))
 			{
 				Q.push(move);
 				m_MovesDone.push_back(move);
 			}
+#ifdef TIMING 
+			if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
+				_cprintf("isValid %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
+
+
+			_cprintf("m_movesDone %i \n", m_MovesDone.size());
+			_cprintf("Q %i \n", Q.size());
+#endif
 		}
 		Q.pop();
 	}
@@ -82,80 +115,22 @@ void CAIBreadth::solve()
 
 std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove)
 {
-	int ClickIndex_X = 0, ClickIndex_Y = 0,
-		EmptyIndex_X = 0, EmptyIndex_Y = 0;
 
-	std::vector<std::shared_ptr<MoveInfo>> newStates;
-	bool found = false;
-	for (UINT x = 0; x < LastMove->Board.size(); ++x)
-	{
-		for (UINT y = 0; y <LastMove->Board[x].size(); ++y)
-		{
-			if (!LastMove->Board[x][y])
-			{
-				EmptyIndex_X = x;
-				EmptyIndex_Y = y;
-				found= true;
-				break;
-			}
-			
-		}
-		if(found)
-			break;
-	}
+	std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> newStates;
+	auto availableMoves = m_pParent->GetAvailableMoves(LastMove->Board);
 
-	if (EmptyIndex_X - 1 >= 0)
-	{
-		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
-		newState->Board = LastMove->Board;
-		
-		newState->Board[EmptyIndex_X][EmptyIndex_Y] = newState->Board[EmptyIndex_X - 1][EmptyIndex_Y];
-		newState->Board[EmptyIndex_X - 1][EmptyIndex_Y] = 0;
-
-		newState->Click = PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y];
-
-		newState->LastMove = LastMove;
-
-
-		newStates.push_back(newState);
-	}
-	if (EmptyIndex_X + 1 < LastMove->Board.size())
+	for(auto ID : availableMoves)
 	{
 		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
 		newState->Board = LastMove->Board;
 
-		newState->Board[EmptyIndex_X][EmptyIndex_Y] = newState->Board[EmptyIndex_X + 1][EmptyIndex_Y];
-		newState->Board[EmptyIndex_X + 1][EmptyIndex_Y] = 0;
+		newState->Click = ID;
 
-		newState->Click = PuzzleIDs[EmptyIndex_X + 1][EmptyIndex_Y];
-
-		newState->LastMove = LastMove;
-		newStates.push_back(newState);
-	}
-	if (EmptyIndex_Y - 1 >= 0)
-	{
-		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
-		newState->Board = LastMove->Board;
-
-		newState->Board[EmptyIndex_X][EmptyIndex_Y] = newState->Board[EmptyIndex_X][EmptyIndex_Y - 1];
-		newState->Board[EmptyIndex_X][EmptyIndex_Y - 1] = 0;
-
-		newState->Click = PuzzleIDs[EmptyIndex_X][EmptyIndex_Y - 1];
+		m_pParent->UpdateState(ID, newState->Board);
 
 		newState->LastMove = LastMove;
-		newStates.push_back(newState);
-	}
-	if (EmptyIndex_Y + 1 < LastMove->Board[EmptyIndex_X].size())
-	{
-		std::shared_ptr<MoveInfo> newState = std::make_shared<MoveInfo>();
-		newState->Board = LastMove->Board;
 
-		newState->Board[EmptyIndex_X][EmptyIndex_Y] = newState->Board[EmptyIndex_X][EmptyIndex_Y + 1];
-		newState->Board[EmptyIndex_X][EmptyIndex_Y + 1] = 0;
 
-		newState->Click = PuzzleIDs[EmptyIndex_X][EmptyIndex_Y + 1];
-
-		newState->LastMove = LastMove;
 		newStates.push_back(newState);
 	}
 
@@ -170,15 +145,15 @@ bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
 
 	
 
-	for (auto& PastMoves : m_MovesDone)
+	for (int idx = m_MovesDone.size()-1; idx >= 0; --idx)
 	{
 		bool bisSame = true;
 
-		for (int x = 0; x < move->Board.size(); ++x)
+		for (int x = 0, lengthX = move->Board.size(); x < lengthX; ++x)
 		{
-			for (int y = 0; y < move->Board[x].size(); ++y)
+			for (int y = 0, length = move->Board[x].size(); y < length; ++y)
 			{
-				if (PastMoves->Board[x][y] != move->Board[x][y])
+				if (m_MovesDone[idx]->Board[x][y] != move->Board[x][y])
 				{
 					bisSame = false;
 					break;

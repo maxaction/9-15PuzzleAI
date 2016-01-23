@@ -14,7 +14,6 @@
 // CPuzzleGameAIApp:
 // See PuzzleGameAI.cpp for the implementation of this class
 //
-
 class CPuzzleGameAIApp : public CWinApp
 {
 public:
@@ -27,6 +26,7 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+	virtual int ExitInstance();
 };
 
 extern CPuzzleGameAIApp theApp;

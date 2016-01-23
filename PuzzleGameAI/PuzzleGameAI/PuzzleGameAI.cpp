@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CPuzzleGameAIApp
 
 BEGIN_MESSAGE_MAP(CPuzzleGameAIApp, CWinApp)
@@ -52,6 +51,8 @@ BOOL CPuzzleGameAIApp::InitInstance()
 	CWinApp::InitInstance();
 
 
+
+
 	// Create the shell manager, in case the dialog contains
 	// any shell tree view or shell list view controls.
 	CShellManager *pShellManager = new CShellManager;
@@ -67,6 +68,11 @@ BOOL CPuzzleGameAIApp::InitInstance()
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+
+#ifdef TIMING 
+	AllocConsole();
+#endif
+		
 
 	CPuzzleGameAIDlg dlg;
 	m_pMainWnd = &dlg;
@@ -98,3 +104,13 @@ BOOL CPuzzleGameAIApp::InitInstance()
 	return FALSE;
 }
 
+
+
+int CPuzzleGameAIApp::ExitInstance()
+{
+	// TODO: Add your specialized code here and/or call the base class
+#ifdef TIMING 
+	FreeConsole();
+#endif
+	return CWinApp::ExitInstance();
+}
