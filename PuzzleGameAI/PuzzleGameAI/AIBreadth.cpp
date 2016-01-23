@@ -105,7 +105,7 @@ void CAIBreadth::solve()
 		Solution = Solution->LastMove;
 	}
 
-	while (m_pParent->isGameRunning() && MessageStack.top())
+	while (m_pParent->isGameRunning() && MessageStack.size())
 	{
 		SendClick(MessageStack.top());
 		MessageStack.pop();
