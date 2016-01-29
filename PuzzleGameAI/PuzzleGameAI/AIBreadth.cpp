@@ -27,6 +27,7 @@ CAIBreadth::~CAIBreadth()
 void CAIBreadth::Startgame(BoardInfo BoardStart)
 {
 	m_BoardView = BoardStart;
+	m_MovesDone.clear();
 	std::thread t([&](){solve();});
 
 	if(Thread.joinable())

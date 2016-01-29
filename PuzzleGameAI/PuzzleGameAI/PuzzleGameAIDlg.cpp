@@ -14,8 +14,8 @@
 #define new DEBUG_NEW
 #endif
 
-static const int MAX_SUFFLES = 1000;
-static const int MIN_SUFFLES = 100;
+static const int MAX_SUFFLES = 10;
+static const int MIN_SUFFLES = 5;
 
 
 // CPuzzleGameAIDlg dialog
@@ -185,7 +185,10 @@ void CPuzzleGameAIDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 
 	if(pScrollBar->m_hWnd == GetDlgItem(IDC_AI_SPEED)->m_hWnd)
 	{
-		m_AiSpeed = nPos;
+		CSliderCtrl* pSlider = (CSliderCtrl*)GetDlgItem(IDC_AI_SPEED);
+
+
+		m_AiSpeed = pSlider->GetPos();
 		CWnd* Lable = GetDlgItem(IDC_SECONDS);
 		if(Lable)
 		{
@@ -314,7 +317,14 @@ void CPuzzleGameAIDlg::RedrawPuzzle()
 		{
 			CWnd* pWnd = GetDlgItem(PuzzleIDs[x][y]);
 			if (pWnd)
-				pWnd->SetWindowText(std::to_wstring(m_boardValues[x][y]).c_str());
+			{
+				if (m_boardValues[x][y])
+				{
+					pWnd->SetWindowText(std::to_wstring(m_boardValues[x][y]).c_str());
+				}
+				else
+					pWnd->SetWindowText(L" ");
+			}
 		}
 	}
 
@@ -356,6 +366,7 @@ void CPuzzleGameAIDlg::SetButtons()
 
 				if(!m_boardValues[x][y])
 				{
+					
 					EmptyIndex_X = x;
 					EmptyIndex_Y = y;
 				}
@@ -365,7 +376,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	if (EmptyIndex_X - 1 >= 0)
 	{
 		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X - 1][EmptyIndex_Y]);
-		if (pWnd && pWnd->IsWindowVisible())
+		if (pWnd && pWnd->IsWindowVisible() && !m_bAIPlaying)
 		{
 			pWnd->EnableWindow(TRUE);
 		}
@@ -373,7 +384,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	if (EmptyIndex_X + 1 < 4)
 	{
 		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X + 1][EmptyIndex_Y]);
-		if (pWnd && pWnd->IsWindowVisible())
+		if (pWnd && pWnd->IsWindowVisible() && !m_bAIPlaying)
 		{
 			pWnd->EnableWindow(TRUE);
 		}
@@ -381,7 +392,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	if (EmptyIndex_Y - 1 >= 0)
 	{
 		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y - 1]);
-		if (pWnd && pWnd->IsWindowVisible())
+		if (pWnd && pWnd->IsWindowVisible() && !m_bAIPlaying)
 		{
 			pWnd->EnableWindow(TRUE);
 		}
@@ -389,7 +400,7 @@ void CPuzzleGameAIDlg::SetButtons()
 	if (EmptyIndex_Y + 1 < 4)
 	{
 		CWnd* pWnd = GetDlgItem(PuzzleIDs[EmptyIndex_X][EmptyIndex_Y + 1]);
-		if (pWnd && pWnd->IsWindowVisible())
+		if (pWnd && pWnd->IsWindowVisible() && !m_bAIPlaying)
 		{
 			pWnd->EnableWindow(TRUE);
 		}
