@@ -16,6 +16,7 @@ void CAIBase::SendClick(UINT ClickID)
 {
 	if (m_nSpeed)
 		Sleep(m_nSpeed);
-
-	m_pParent->PostMessage(AI_BTN_CLICK, ClickID);
+	if(m_pParent)
+		m_pParent->PostMessage(AI_BTN_CLICK, ClickID);
 }
+

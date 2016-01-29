@@ -8,14 +8,15 @@
 #include "afxdialogex.h"
 #include <random>
 #include "AIBreadth.h"
+#include "AIAStarMan.h"
 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-static const int MAX_SUFFLES = 10;
-static const int MIN_SUFFLES = 5;
+static const int MAX_SUFFLES = 1000;
+static const int MIN_SUFFLES = 100;
 
 
 // CPuzzleGameAIDlg dialog
@@ -125,7 +126,7 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 			}
 			if (ID == IDC_PLAYER_AI_ASM)
 			{
-				//TODO: add AI for A* manhattan
+				m_pAI = std::make_shared<CAIAStarMan>(this);
 			}
 			if (ID == IDC_PLAYER_AI_ASP)
 			{
@@ -599,8 +600,6 @@ void CPuzzleGameAIDlg::EndGame()
 LRESULT CPuzzleGameAIDlg::OnAIClick(WPARAM wParam, LPARAM lParam)
 {
 	UINT ClickID = static_cast<UINT>(wParam);
-
-
 	OnPuzzleClick(ClickID);
 
 	return 0;

@@ -2,13 +2,12 @@
 #include "AI.h"
 #include <thread>
 
-
-class CAIBreadth :
+class CAIAStarMan :
 	public CAIBase
 {
 public:
-	CAIBreadth(CPuzzleGameAIDlg* parent);
-	~CAIBreadth();
+	CAIAStarMan(CPuzzleGameAIDlg* parent);
+	~CAIAStarMan();
 
 	virtual void Startgame(BoardInfo BoardStart);
 
@@ -19,16 +18,19 @@ protected:
 		BoardInfo Board;
 		UINT Click;
 		std::shared_ptr<MoveInfo> LastMove;
+		int DistanceGone = 0, Distance2Go = 0;
+		int TotalDist() {return DistanceGone + Distance2Go;}
 	};
 
 	std::vector<std::shared_ptr<MoveInfo>> GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove);
 
-
 	void solve();
-	
-	std::thread Thread;
+
+	std::thread m_Thread;
 
 	bool isValid(std::shared_ptr<MoveInfo>);
+
+	int DistanceLeft(BoardInfo& Board);
 
 	std::vector<std::shared_ptr<MoveInfo>> m_MovesDone;
 };

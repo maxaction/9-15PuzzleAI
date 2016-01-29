@@ -1,52 +1,55 @@
 #include "stdafx.h"
-#include "AIBreadth.h"
+#include "AIAStarMan.h"
 #include "PuzzleGameAIDlg.h"
 #include <queue>
 #include <stack>
 #include <thread>
 #include <chrono>
+#include <algorithm>
 
 #include <conio.h>
-
 
 #define CHRONO_NOW std::chrono::high_resolution_clock::now()
 #define CHRONO_DURATION std::chrono::duration_cast<std::chrono::microseconds>
 
-CAIBreadth::CAIBreadth(CPuzzleGameAIDlg* parent): CAIBase(parent)
+CAIAStarMan::CAIAStarMan(CPuzzleGameAIDlg* parent) : CAIBase(parent)
 {
+
 }
 
 
-CAIBreadth::~CAIBreadth()
+CAIAStarMan::~CAIAStarMan()
 {
-	if(Thread.joinable())
-		Thread.join();
-
+	if (m_Thread.joinable())
+		m_Thread.join();
 }
 
-void CAIBreadth::Startgame(BoardInfo BoardStart)
+void CAIAStarMan::Startgame(BoardInfo BoardStart)
 {
 	CAIBase::Startgame(BoardStart);
 	m_MovesDone.clear();
-	std::thread t([&](){solve();});
+	std::thread t([&](){solve(); });
 
-	if(Thread.joinable())
-		Thread.join();
+	if (m_Thread.joinable())
+		m_Thread.join();
 
-	Thread.swap(t);
+	m_Thread.swap(t);
+
 }
 
-void CAIBreadth::solve()
+void CAIAStarMan::solve()
 {
 	bool bSolved = false;
-	std::queue<std::shared_ptr<MoveInfo>> Q;
+	std::vector<std::shared_ptr<MoveInfo>> Q;
 
 	auto start = std::make_shared<MoveInfo>();
 	start->Board = m_BoardView;
 	start->Click = NULL;
 	start->LastMove = NULL;
+	start->DistanceGone = 0;
+	start->Distance2Go = DistanceLeft(m_BoardView);
 
-	Q.push(start);
+	Q.push_back(start);
 
 	std::chrono::high_resolution_clock::time_point Tp = CHRONO_NOW;
 
@@ -57,7 +60,7 @@ void CAIBreadth::solve()
 #ifdef TIMING 
 		Tp = CHRONO_NOW;
 #endif
-		if(m_pParent->CheckWinCondition(Q.front()->Board))
+		if (m_pParent->CheckWinCondition(Q.front()->Board))
 		{
 			Solution = Q.front();
 			bSolved = true;
@@ -84,7 +87,7 @@ void CAIBreadth::solve()
 #endif
 			if (isValid(move))
 			{
-				Q.push(move);
+				Q.push_back(move);
 				m_MovesDone.push_back(move);
 			}
 #ifdef TIMING 
@@ -96,7 +99,11 @@ void CAIBreadth::solve()
 			_cprintf("Q %i \n", Q.size());
 #endif
 		}
-		Q.pop();
+		Q.erase(Q.begin());
+
+		std::sort(Q.begin(), Q.end(),
+				  [](std::shared_ptr<MoveInfo> Move1, std::shared_ptr<MoveInfo> Move2)
+				  ->bool{return Move1->TotalDist() < Move2->TotalDist(); });
 	}
 
 	std::stack<UINT> MessageStack;
@@ -111,16 +118,16 @@ void CAIBreadth::solve()
 		SendClick(MessageStack.top());
 		MessageStack.pop();
 	}
-	
+
 }
 
-bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
+bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 {
 	bool bValid = true;
 
-	
 
-	for (int idx = m_MovesDone.size()-1; idx >= 0; --idx)
+
+	for (int idx = m_MovesDone.size() - 1; idx >= 0; --idx)
 	{
 		bool bisSame = true;
 
@@ -139,15 +146,26 @@ bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
 		}
 		if (bisSame)
 		{
-			bValid = false;
+
+			if(move->TotalDist() < m_MovesDone[idx]->TotalDist())
+			{
+				m_MovesDone.erase(m_MovesDone.begin() + idx);
+			}
+			else
+			{
+				bValid = false;
+			}
 			break;
 		}
 	}
 
+	
+
 	return bValid;
 }
 
-std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove)
+
+std::vector<std::shared_ptr<CAIAStarMan::MoveInfo>> CAIAStarMan::GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove)
 {
 
 	std::vector<std::shared_ptr<MoveInfo>> newStates;
@@ -164,6 +182,9 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 
 		newState->LastMove = LastMove;
 
+		newState->DistanceGone = LastMove->DistanceGone + 1;
+
+		newState->Distance2Go = DistanceLeft(newState->Board);
 
 		newStates.push_back(newState);
 	}
@@ -171,3 +192,47 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 	return newStates;
 
 }
+
+int CAIAStarMan::DistanceLeft(BoardInfo& Board)
+{
+	int dist = 0;
+	for (int Number = 0; Number < Board.size()*Board[0].size(); ++Number)
+	{
+		bool bfound = false;
+		for (int x = 0; x < Board.size(); ++x)
+		{
+			for (int y = 0; y < Board[x].size(); ++y)
+			{
+				if (Number == 0 && Board[x][y] == Number)
+				{
+					int locX = Board.size()-1;
+					int locY = Board[Board.size() - 1].size();
+
+					dist += abs(locX - x);
+					dist += abs(locY - y);
+
+					bfound = true;
+					break;
+				}
+				
+				if (Board[x][y] == Number)
+				{
+					int locX = (Number - 1) % Board.size();
+					int locY = (Number - 1) / Board.size();
+
+					dist += abs(locX - x);
+					dist += abs(locY - y);
+
+					bfound = true;
+					break;
+				}
+				
+			}
+			if (bfound)
+				break;
+		}
+	}
+
+	return dist;
+}
+

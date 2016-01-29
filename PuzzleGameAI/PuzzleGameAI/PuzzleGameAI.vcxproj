@@ -187,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AI.h" />
+    <ClInclude Include="AIAStarMan.h" />
     <ClInclude Include="AIBreadth.h" />
     <ClInclude Include="PuzzleGameAI.h" />
     <ClInclude Include="PuzzleGameAIDlg.h" />
@@ -196,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AI.cpp" />
+    <ClCompile Include="AIAStarMan.cpp" />
     <ClCompile Include="AIBreadth.cpp" />
     <ClCompile Include="PuzzleGameAI.cpp" />
     <ClCompile Include="PuzzleGameAIDlg.cpp" />
