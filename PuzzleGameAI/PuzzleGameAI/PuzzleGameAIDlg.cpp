@@ -76,7 +76,8 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 
 	resetBoard();
 
-	srand((UINT)time(NULL));
+	//srand(UINT)time(NULL));
+	srand(NULL);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -304,6 +305,9 @@ void CPuzzleGameAIDlg::resetBoard()
 			}
 		}
 	}
+
+	m_CompleteHash = GenHash(m_boardValues);
+
 	RedrawPuzzle();
 }
 
@@ -407,47 +411,9 @@ void CPuzzleGameAIDlg::SetButtons()
 		}
 	}
 }
-bool CPuzzleGameAIDlg::CheckWinCondition(BoardInfo& board)
+bool CPuzzleGameAIDlg::CheckWinCondition(BITMASK& Hash)
 {
-
-	bool bGameWon = true;
-
-	int Number = 1;
-	for (UINT col = 0, lengthX = board.size(); col < board.size(); ++col)
-	{
-		std::vector<int> row;
-
-		for (UINT idx = 0, length = board[col].size(); idx < length; ++idx)
-		{
-			if (idx == length - 1 && col == lengthX - 1)
-			{
-				if (board[col][idx] != 0)
-				{
-					bGameWon = false;
-					break;
-				}
-			}
-			else
-			{
-				if (board[col][idx] != Number)
-				{
-					bGameWon = false;
-					break;
-				}
-			}
-			++Number;
-		}
-		if(!bGameWon)
-			break;
-	}
-
-	if (bGameWon)
-	{
-		MessageBox(L"it is true");
-	}
-
-
-	return bGameWon;
+	return Hash == m_CompleteHash;
 
 }
 
@@ -457,7 +423,7 @@ void CPuzzleGameAIDlg::CheckWin()
 	bool bGameWon = false;
 	if (m_bGameRunning)
 	{
-		bGameWon = CheckWinCondition(m_boardValues);
+		bGameWon = CheckWinCondition(GenHash(m_boardValues));
 	}
 
 	if (bGameWon)
@@ -680,4 +646,19 @@ std::vector<UINT> CPuzzleGameAIDlg::GetAvailableMoves(BoardInfo& CurrentState)
 	}
 
 	return AvailableMoves;
+}
+
+BITMASK CPuzzleGameAIDlg::GenHash(BoardInfo& CurrentState)
+{
+	BITMASK hash = 0;
+
+	for (int x = 0; x < CurrentState.size(); ++x)
+	{
+		for(int y = 0; y < CurrentState[x].size(); ++y)
+		{
+			hash = hash << 1+ (int)log2(CurrentState.size() * CurrentState.size());
+			hash |= CurrentState[x][y] ;
+		}
+	}
+	return hash;
 }

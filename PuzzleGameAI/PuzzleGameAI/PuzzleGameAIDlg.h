@@ -10,6 +10,7 @@
 
 #define AI_BTN_CLICK  (WM_USER + 100)
 
+
 const static UINT PuzzleIDs[4][4] = { { IDC_PUZZLE_0_0, IDC_PUZZLE_0_1, IDC_PUZZLE_0_2, IDC_PUZZLE_0_3 },
 { IDC_PUZZLE_1_0, IDC_PUZZLE_1_1, IDC_PUZZLE_1_2, IDC_PUZZLE_1_3 },
 { IDC_PUZZLE_2_0, IDC_PUZZLE_2_1, IDC_PUZZLE_2_2, IDC_PUZZLE_2_3 },
@@ -29,13 +30,15 @@ public:
 
 	typedef std::vector<std::vector<int>> BoardInfo;
 
-	bool CheckWinCondition(BoardInfo& board);
+	bool CheckWinCondition(BITMASK& Hash);
 
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnPuzzleClick(UINT id);
 	void UpdateState(UINT id, BoardInfo& CurrentState);
 	std::vector<UINT> GetAvailableMoves(BoardInfo& CurrentState);
 	afx_msg void OnBnClickedSuffle();
+
+	BITMASK GenHash(BoardInfo& CurrentState);
 	
 	bool isGameRunning() {return m_bGameRunning;}
 
@@ -69,6 +72,8 @@ private:
 	int m_AiSpeed = 0;
 
 	BoardInfo m_boardValues;
+
+	BITMASK m_CompleteHash;
 
 	bool m_bGameRunning = false;
 

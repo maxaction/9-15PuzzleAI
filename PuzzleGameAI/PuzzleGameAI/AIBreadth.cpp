@@ -49,6 +49,8 @@ void CAIBreadth::solve()
 	Q.push(start);
 
 	std::chrono::high_resolution_clock::time_point Tp = CHRONO_NOW;
+	std::chrono::high_resolution_clock::time_point TotalTime = CHRONO_NOW;
+
 
 	std::shared_ptr<MoveInfo> Solution;
 
@@ -57,7 +59,7 @@ void CAIBreadth::solve()
 #ifdef TIMING 
 		Tp = CHRONO_NOW;
 #endif
-		if(m_pParent->CheckWinCondition(Q.front()->Board))
+		if(m_pParent->CheckWinCondition(Q.front()->Hash))
 		{
 			Solution = Q.front();
 			bSolved = true;
@@ -99,12 +101,21 @@ void CAIBreadth::solve()
 		Q.pop();
 	}
 
+#ifdef TIMING
+	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
+#endif
+
+
 	std::stack<UINT> MessageStack;
 	while (m_pParent->isGameRunning() && Solution && Solution->Click)
 	{
 		MessageStack.push(Solution->Click);
 		Solution = Solution->LastMove;
 	}
+
+#ifdef TIMING
+	_cprintf("MovestoTake: %i  \n", MessageStack.size());
+#endif
 
 	while (m_pParent->isGameRunning() && MessageStack.size())
 	{
@@ -122,22 +133,7 @@ bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
 
 	for (int idx = m_MovesDone.size()-1; idx >= 0; --idx)
 	{
-		bool bisSame = true;
-
-		for (int x = 0, lengthX = move->Board.size(); x < lengthX; ++x)
-		{
-			for (int y = 0, length = move->Board[x].size(); y < length; ++y)
-			{
-				if (m_MovesDone[idx]->Board[x][y] != move->Board[x][y])
-				{
-					bisSame = false;
-					break;
-				}
-			}
-			if (!bisSame)
-				break;
-		}
-		if (bisSame)
+		if (m_MovesDone[idx]->Hash == move->Hash)
 		{
 			bValid = false;
 			break;
@@ -164,6 +160,7 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 
 		newState->LastMove = LastMove;
 
+		newState->Hash = m_pParent->GenHash(newState->Board);
 
 		newStates.push_back(newState);
 	}

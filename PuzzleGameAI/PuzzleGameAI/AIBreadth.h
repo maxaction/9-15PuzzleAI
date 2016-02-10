@@ -19,6 +19,7 @@ protected:
 		BoardInfo Board;
 		UINT Click;
 		std::shared_ptr<MoveInfo> LastMove;
+		BITMASK Hash = 0;
 	};
 
 	std::vector<std::shared_ptr<MoveInfo>> GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove);

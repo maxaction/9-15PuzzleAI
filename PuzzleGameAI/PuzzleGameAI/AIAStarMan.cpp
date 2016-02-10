@@ -52,6 +52,7 @@ void CAIAStarMan::solve()
 	Q.push_back(start);
 
 	std::chrono::high_resolution_clock::time_point Tp = CHRONO_NOW;
+	std::chrono::high_resolution_clock::time_point TotalTime = CHRONO_NOW;
 
 	std::shared_ptr<MoveInfo> Solution;
 
@@ -60,7 +61,7 @@ void CAIAStarMan::solve()
 #ifdef TIMING 
 		Tp = CHRONO_NOW;
 #endif
-		if (m_pParent->CheckWinCondition(Q.front()->Board))
+		if (m_pParent->CheckWinCondition(Q.front()->Hash))
 		{
 			Solution = Q.front();
 			bSolved = true;
@@ -101,10 +102,22 @@ void CAIAStarMan::solve()
 		}
 		Q.erase(Q.begin());
 
+#ifdef TIMING
+		Tp = CHRONO_NOW;
+#endif
 		std::sort(Q.begin(), Q.end(),
 				  [](std::shared_ptr<MoveInfo> Move1, std::shared_ptr<MoveInfo> Move2)
 				  ->bool{return Move1->TotalDist() < Move2->TotalDist(); });
+#ifdef TIMING 
+		if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
+			_cprintf("std::sort %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
+
+#endif
 	}
+#ifdef TIMING
+	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
+#endif
+
 
 	std::stack<UINT> MessageStack;
 	while (m_pParent->isGameRunning() && Solution && Solution->Click)
@@ -112,6 +125,10 @@ void CAIAStarMan::solve()
 		MessageStack.push(Solution->Click);
 		Solution = Solution->LastMove;
 	}
+
+#ifdef TIMING
+	_cprintf("MovestoTake: %i  \n", MessageStack.size());
+#endif
 
 	while (m_pParent->isGameRunning() && MessageStack.size())
 	{
@@ -129,24 +146,8 @@ bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 
 	for (int idx = m_MovesDone.size() - 1; idx >= 0; --idx)
 	{
-		bool bisSame = true;
-
-		for (int x = 0, lengthX = move->Board.size(); x < lengthX; ++x)
+		if (m_MovesDone[idx]->Hash == move->Hash)
 		{
-			for (int y = 0, length = move->Board[x].size(); y < length; ++y)
-			{
-				if (m_MovesDone[idx]->Board[x][y] != move->Board[x][y])
-				{
-					bisSame = false;
-					break;
-				}
-			}
-			if (!bisSame)
-				break;
-		}
-		if (bisSame)
-		{
-
 			if(move->TotalDist() < m_MovesDone[idx]->TotalDist())
 			{
 				m_MovesDone.erase(m_MovesDone.begin() + idx);
@@ -185,6 +186,7 @@ std::vector<std::shared_ptr<CAIAStarMan::MoveInfo>> CAIAStarMan::GetNextBoardSta
 		newState->DistanceGone = LastMove->DistanceGone + 1;
 
 		newState->Distance2Go = DistanceLeft(newState->Board);
+		newState->Hash = m_pParent->GenHash(newState->Board);
 
 		newStates.push_back(newState);
 	}

@@ -20,6 +20,7 @@ protected:
 		std::shared_ptr<MoveInfo> LastMove;
 		int DistanceGone = 0, Distance2Go = 0;
 		int TotalDist() {return DistanceGone + Distance2Go;}
+		BITMASK Hash = 0;
 	};
 
 	std::vector<std::shared_ptr<MoveInfo>> GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove);

@@ -1,6 +1,12 @@
 #pragma once
 #include<vector>
 #include<memory>
+#include<bitset>
+
+
+
+#define BITMASK std::bitset<128>
+
 
 
 class CPuzzleGameAIDlg;
@@ -25,6 +31,6 @@ protected:
 
 	BoardInfo m_BoardView;
 
-	int m_nSpeed;
+	int m_nSpeed = 0;
 };
 
