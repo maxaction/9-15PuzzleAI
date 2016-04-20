@@ -101,7 +101,8 @@ void CAIBreadth::solve()
 		Q.pop();
 	}
 
-#ifdef TIMING
+#if defined(TIMING) || defined(TIMING_BASIC)
+
 	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
 #endif
 
@@ -113,7 +114,8 @@ void CAIBreadth::solve()
 		Solution = Solution->LastMove;
 	}
 
-#ifdef TIMING
+#if defined(TIMING) || defined(TIMING_BASIC)
+
 	_cprintf("MovestoTake: %i  \n", MessageStack.size());
 #endif
 

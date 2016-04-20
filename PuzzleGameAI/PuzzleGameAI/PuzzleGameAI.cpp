@@ -69,7 +69,7 @@ BOOL CPuzzleGameAIApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-#ifdef TIMING 
+#if defined(TIMING) || defined(TIMING_BASIC)
 	AllocConsole();
 #endif
 		
@@ -109,7 +109,7 @@ BOOL CPuzzleGameAIApp::InitInstance()
 int CPuzzleGameAIApp::ExitInstance()
 {
 	// TODO: Add your specialized code here and/or call the base class
-#ifdef TIMING 
+#if defined(TIMING) || defined(TIMING_BASIC)
 	FreeConsole();
 #endif
 	return CWinApp::ExitInstance();

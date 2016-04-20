@@ -40,7 +40,8 @@ void CAIAStarMan::Startgame(BoardInfo BoardStart)
 void CAIAStarMan::solve()
 {
 	bool bSolved = false;
-	std::vector<std::shared_ptr<MoveInfo>> Q;
+
+	MyQueue Q(Compare);
 
 	auto start = std::make_shared<MoveInfo>();
 	start->Board = m_BoardView;
@@ -49,7 +50,7 @@ void CAIAStarMan::solve()
 	start->DistanceGone = 0;
 	start->Distance2Go = DistanceLeft(m_BoardView);
 
-	Q.push_back(start);
+	Q.push(start);
 
 	std::chrono::high_resolution_clock::time_point Tp = CHRONO_NOW;
 	std::chrono::high_resolution_clock::time_point TotalTime = CHRONO_NOW;
@@ -61,9 +62,9 @@ void CAIAStarMan::solve()
 #ifdef TIMING 
 		Tp = CHRONO_NOW;
 #endif
-		if (m_pParent->CheckWinCondition(Q.front()->Hash))
+		if (m_pParent->CheckWinCondition(Q.top()->Hash))
 		{
-			Solution = Q.front();
+			Solution = Q.top();
 			bSolved = true;
 			break;
 		}
@@ -75,12 +76,15 @@ void CAIAStarMan::solve()
 
 		Tp = CHRONO_NOW;
 #endif
-		auto Nextmoves = GetNextBoardStates(Q.front());
+		auto Nextmoves = GetNextBoardStates(Q.top());
+		Q.pop();
 
 #ifdef TIMING 
 		if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
 			_cprintf("GetNextBoardStates %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
 #endif
+		
+
 		for (auto& move : Nextmoves)
 		{
 #ifdef TIMING 
@@ -88,7 +92,7 @@ void CAIAStarMan::solve()
 #endif
 			if (isValid(move))
 			{
-				Q.push_back(move);
+				Q.push(move);
 				m_MovesDone.push_back(move);
 			}
 #ifdef TIMING 
@@ -100,21 +104,13 @@ void CAIAStarMan::solve()
 			_cprintf("Q %i \n", Q.size());
 #endif
 		}
-		Q.erase(Q.begin());
 
-#ifdef TIMING
+#if defined(TIMING) || defined(TIMING_BASIC)
 		Tp = CHRONO_NOW;
 #endif
-		std::sort(Q.begin(), Q.end(),
-				  [](std::shared_ptr<MoveInfo> Move1, std::shared_ptr<MoveInfo> Move2)
-				  ->bool{return Move1->TotalDist() < Move2->TotalDist(); });
-#ifdef TIMING 
-		if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
-			_cprintf("std::sort %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
-
-#endif
+		
 	}
-#ifdef TIMING
+#if defined(TIMING) || defined(TIMING_BASIC)
 	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
 #endif
 
@@ -126,7 +122,7 @@ void CAIAStarMan::solve()
 		Solution = Solution->LastMove;
 	}
 
-#ifdef TIMING
+#if defined(TIMING) || defined(TIMING_BASIC)
 	_cprintf("MovestoTake: %i  \n", MessageStack.size());
 #endif
 
@@ -148,7 +144,7 @@ bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 	{
 		if (m_MovesDone[idx]->Hash == move->Hash)
 		{
-			if(move->TotalDist() < m_MovesDone[idx]->TotalDist())
+			if (move->DistanceGone < m_MovesDone[idx]->DistanceGone)
 			{
 				m_MovesDone.erase(m_MovesDone.begin() + idx);
 			}
@@ -159,8 +155,6 @@ bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 			break;
 		}
 	}
-
-	
 
 	return bValid;
 }
