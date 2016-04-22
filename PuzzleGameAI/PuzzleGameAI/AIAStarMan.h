@@ -21,7 +21,7 @@ protected:
 		std::shared_ptr<MoveInfo> LastMove;
 		int DistanceGone = 0, Distance2Go = 0;
 		int TotalDist() {return DistanceGone + Distance2Go;}
-		BITMASK Hash = 0;
+		size_t Hash = 0;
 	};
 
 	std::function<bool(const std::shared_ptr<MoveInfo>, const std::shared_ptr<MoveInfo>)> Compare = [](const std::shared_ptr<MoveInfo> Move1, const std::shared_ptr<MoveInfo> Move2){return Move1->TotalDist() > Move2->TotalDist(); };

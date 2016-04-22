@@ -30,7 +30,7 @@ public:
 
 	typedef std::vector<std::vector<int>> BoardInfo;
 
-	bool CheckWinCondition(BITMASK& Hash);
+	bool CheckWinCondition(size_t Hash);
 
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnPuzzleClick(UINT id);
@@ -73,7 +73,7 @@ private:
 
 	BoardInfo m_boardValues;
 
-	BITMASK m_CompleteHash;
+	size_t m_CompleteHash;
 
 	bool m_bGameRunning = false;
 

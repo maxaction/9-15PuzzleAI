@@ -49,6 +49,7 @@ void CAIAStarMan::solve()
 	start->LastMove = NULL;
 	start->DistanceGone = 0;
 	start->Distance2Go = DistanceLeft(m_BoardView);
+	start->Hash = std::hash<BITMASK>()(m_pParent->GenHash(m_BoardView));
 
 	Q.push(start);
 
@@ -138,8 +139,6 @@ bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 {
 	bool bValid = true;
 
-
-
 	for (int idx = m_MovesDone.size() - 1; idx >= 0; --idx)
 	{
 		if (m_MovesDone[idx]->Hash == move->Hash)
@@ -180,7 +179,7 @@ std::vector<std::shared_ptr<CAIAStarMan::MoveInfo>> CAIAStarMan::GetNextBoardSta
 		newState->DistanceGone = LastMove->DistanceGone + 1;
 
 		newState->Distance2Go = DistanceLeft(newState->Board);
-		newState->Hash = m_pParent->GenHash(newState->Board);
+		newState->Hash = std::hash<BITMASK>()(m_pParent->GenHash(newState->Board));
 
 		newStates.push_back(newState);
 	}

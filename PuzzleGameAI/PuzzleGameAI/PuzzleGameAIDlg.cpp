@@ -306,7 +306,7 @@ void CPuzzleGameAIDlg::resetBoard()
 		}
 	}
 
-	m_CompleteHash = GenHash(m_boardValues);
+	m_CompleteHash = std::hash<BITMASK>()(GenHash(m_boardValues));
 
 	RedrawPuzzle();
 }
@@ -411,7 +411,7 @@ void CPuzzleGameAIDlg::SetButtons()
 		}
 	}
 }
-bool CPuzzleGameAIDlg::CheckWinCondition(BITMASK& Hash)
+bool CPuzzleGameAIDlg::CheckWinCondition(size_t Hash)
 {
 	return Hash == m_CompleteHash;
 
@@ -423,7 +423,7 @@ void CPuzzleGameAIDlg::CheckWin()
 	bool bGameWon = false;
 	if (m_bGameRunning)
 	{
-		bGameWon = CheckWinCondition(GenHash(m_boardValues));
+		bGameWon = CheckWinCondition(std::hash<BITMASK>()(GenHash(m_boardValues)));
 	}
 
 	if (bGameWon)

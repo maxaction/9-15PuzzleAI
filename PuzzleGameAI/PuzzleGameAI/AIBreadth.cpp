@@ -45,6 +45,7 @@ void CAIBreadth::solve()
 	start->Board = m_BoardView;
 	start->Click = NULL;
 	start->LastMove = NULL;
+	start->Hash = std::hash<BITMASK>()(m_pParent->GenHash(m_BoardView));
 
 	Q.push(start);
 
@@ -162,7 +163,7 @@ std::vector<std::shared_ptr<CAIBreadth::MoveInfo>> CAIBreadth::GetNextBoardState
 
 		newState->LastMove = LastMove;
 
-		newState->Hash = m_pParent->GenHash(newState->Board);
+		newState->Hash = std::hash<BITMASK>()(m_pParent->GenHash(newState->Board));
 
 		newStates.push_back(newState);
 	}
