@@ -27,7 +27,6 @@ CAIAStarMan::~CAIAStarMan()
 void CAIAStarMan::Startgame(BoardInfo BoardStart)
 {
 	CAIBase::Startgame(BoardStart);
-	m_MovesDone.clear();
 	std::thread t([&](){solve(); });
 
 	if (m_Thread.joinable())
@@ -94,7 +93,7 @@ void CAIAStarMan::solve()
 			if (isValid(move))
 			{
 				Q.push(move);
-				m_MovesDone.push_back(move);
+				m_MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
 			}
 #ifdef TIMING 
 			if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
@@ -112,7 +111,9 @@ void CAIAStarMan::solve()
 		
 	}
 #if defined(TIMING) || defined(TIMING_BASIC)
-	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
+	_cprintf("Time Taken: %i ms \n", std::chrono::duration_cast<std::chrono::milliseconds>(CHRONO_NOW - TotalTime).count());
+	_cprintf("Moves Done: %i \n", m_MovesDone.size());
+	_cprintf("Queue Size: %i \n", Q.size());
 #endif
 
 
@@ -133,25 +134,30 @@ void CAIAStarMan::solve()
 		MessageStack.pop();
 	}
 
+	m_MovesDone.clear();
+
 }
 
-bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
+bool CAIAStarMan::isValid(const std::shared_ptr<MoveInfo>& move)
 {
 	bool bValid = true;
 
-	for (int idx = m_MovesDone.size() - 1; idx >= 0; --idx)
+	std::map<size_t, std::shared_ptr<MoveInfo>>::iterator it;
+
+	it = m_MovesDone.find(move->Hash);
+
+	if (it != m_MovesDone.end())
 	{
-		if (m_MovesDone[idx]->Hash == move->Hash)
+		if (it->second->Hash == move->Hash)
 		{
-			if (move->DistanceGone < m_MovesDone[idx]->DistanceGone)
+			if (move->DistanceGone < it->second->DistanceGone)
 			{
-				m_MovesDone.erase(m_MovesDone.begin() + idx);
+				m_MovesDone.erase(it);
 			}
 			else
 			{
 				bValid = false;
 			}
-			break;
 		}
 	}
 
@@ -159,7 +165,7 @@ bool CAIAStarMan::isValid(std::shared_ptr<MoveInfo> move)
 }
 
 
-std::vector<std::shared_ptr<CAIAStarMan::MoveInfo>> CAIAStarMan::GetNextBoardStates(std::shared_ptr<MoveInfo> LastMove)
+std::vector<std::shared_ptr<CAIAStarMan::MoveInfo>> CAIAStarMan::GetNextBoardStates(const std::shared_ptr<MoveInfo>& LastMove)
 {
 
 	std::vector<std::shared_ptr<MoveInfo>> newStates;

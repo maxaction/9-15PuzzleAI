@@ -1,6 +1,7 @@
 #pragma once
 #include "AI.h"
 #include <thread>
+#include <map>
 
 
 class CAIBreadth :
@@ -31,6 +32,6 @@ protected:
 
 	bool isValid(std::shared_ptr<MoveInfo>);
 
-	std::vector<std::shared_ptr<MoveInfo>> m_MovesDone;
+	std::map<size_t, std::shared_ptr<MoveInfo>> m_MovesDone;
 };
 

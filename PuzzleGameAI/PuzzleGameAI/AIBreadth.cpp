@@ -88,7 +88,7 @@ void CAIBreadth::solve()
 			if (isValid(move))
 			{
 				Q.push(move);
-				m_MovesDone.push_back(move);
+				m_MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
 			}
 #ifdef TIMING 
 			if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
@@ -104,7 +104,9 @@ void CAIBreadth::solve()
 
 #if defined(TIMING) || defined(TIMING_BASIC)
 
-	_cprintf("Time Taken: %i s \n", std::chrono::duration_cast<std::chrono::seconds>(CHRONO_NOW - TotalTime).count());
+	_cprintf("Time Taken: %i ms \n", std::chrono::duration_cast<std::chrono::milliseconds>(CHRONO_NOW - TotalTime).count());
+	_cprintf("Moves Done: %i \n", m_MovesDone.size());
+	_cprintf("Queue Size: %i \n", Q.size());
 #endif
 
 
@@ -132,14 +134,15 @@ bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
 {
 	bool bValid = true;
 
-	
+	std::map<size_t, std::shared_ptr<MoveInfo>>::iterator it;
 
-	for (int idx = m_MovesDone.size()-1; idx >= 0; --idx)
+	it = m_MovesDone.find(move->Hash);
+
+	if (it != m_MovesDone.end())
 	{
-		if (m_MovesDone[idx]->Hash == move->Hash)
+		if (it->second->Hash == move->Hash)
 		{
 			bValid = false;
-			break;
 		}
 	}
 

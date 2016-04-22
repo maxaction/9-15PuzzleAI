@@ -15,8 +15,8 @@
 #define new DEBUG_NEW
 #endif
 
-static const int MAX_SUFFLES = 1000;
-static const int MIN_SUFFLES = 100;
+static const int MAX_SUFFLES = 0;
+static const int MIN_SUFFLES = 25;
 
 
 // CPuzzleGameAIDlg dialog
@@ -76,8 +76,8 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 
 	resetBoard();
 
-	//srand(UINT)time(NULL));
-	srand(NULL);
+	srand((UINT)time(NULL));
+	//srand(NULL);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -430,7 +430,7 @@ void CPuzzleGameAIDlg::CheckWin()
 	{
 		m_bGameRunning = false;
 
-		MessageBox(L"Complete");
+		//MessageBox(L"Complete");
 		EndGame();
 	}
 }
