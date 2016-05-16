@@ -19,6 +19,10 @@ static const int MAX_SUFFLES = 0;
 static const int MIN_SUFFLES = 25;
 
 
+const int Worst9[3][3] = { { 8, 6, 7 }, 
+						   { 2, 5, 4 }, 
+						   { 3, 0, 1 } };
+
 // CPuzzleGameAIDlg dialog
 
 CPuzzleGameAIDlg::CPuzzleGameAIDlg(CWnd* pParent /*=NULL*/)
@@ -101,8 +105,7 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 {
 	std::vector<UINT> IDs = {IDC_PLAYER_HUMAN,
 							 IDC_PLAYER_AI_DFS,
-							 IDC_PLAYER_AI_ASM,
-							 IDC_PLAYER_AI_ASP};
+							 IDC_PLAYER_AI_ASM};
 	for(auto ID : IDs)
 	{
 		if(ID== CtrlID)
@@ -128,10 +131,6 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 			if (ID == IDC_PLAYER_AI_ASM)
 			{
 				m_pAI = std::make_shared<CAIAStarMan>(this);
-			}
-			if (ID == IDC_PLAYER_AI_ASP)
-			{
-				//TODO: add AI for A* pattarn
 			}
 		}
 		else
@@ -161,6 +160,12 @@ void CPuzzleGameAIDlg::OnSizeChange(UINT id)
 		{
 			pBtn->SetCheck(FALSE);
 		}
+
+		CWnd* pWnd = GetDlgItem(IDC_WORST);
+		if (pWnd)
+		{
+			pWnd->EnableWindow(TRUE);
+		}
 	}
 	else
 	{
@@ -174,6 +179,12 @@ void CPuzzleGameAIDlg::OnSizeChange(UINT id)
 		if (pBtn)
 		{
 			pBtn->SetCheck(TRUE);
+		}
+
+		CWnd* pWnd = GetDlgItem(IDC_WORST);
+		if (pWnd)
+		{
+			pWnd->EnableWindow(FALSE);
 		}
 	}
 
@@ -449,11 +460,35 @@ void CPuzzleGameAIDlg::OnBnClickedSuffle()
 
 void CPuzzleGameAIDlg::StartGame()
 {
-	int numberOfMoves = (rand() %(MAX_SUFFLES + MIN_SUFFLES)) + MIN_SUFFLES;
-	for (int idx = 0; idx < numberOfMoves; ++idx)
+	bool suffled = false; 
+	CButton* pBtn = (CButton*)GetDlgItem(IDC_WORST);
+	if (pBtn && pBtn->GetCheck())
 	{
-		auto Moves = GetAvailableMoves(m_boardValues);
-		UpdateState(Moves[rand() % Moves.size()], m_boardValues);
+		m_boardValues.clear();
+		CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
+
+		if (pBtn && pBtn->GetCheck())
+		{
+			for (int col = 0; col < 3; ++col)
+			{
+				std::vector<int> row;
+				for (int idx = 0; idx < 3; ++idx)
+				{
+					row.push_back(Worst9[col][idx]);
+				}
+				m_boardValues.push_back(row);
+			}
+			suffled = true;
+		}
+	}
+	if (!suffled)
+	{
+		int numberOfMoves = (rand() % (MAX_SUFFLES + MIN_SUFFLES)) + MIN_SUFFLES;
+		for (int idx = 0; idx < numberOfMoves; ++idx)
+		{
+			auto Moves = GetAvailableMoves(m_boardValues);
+			UpdateState(Moves[rand() % Moves.size()], m_boardValues);
+		}
 	}
 
 	CWnd* pWnd = GetDlgItem(IDC_SIZE_8);
