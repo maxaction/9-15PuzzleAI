@@ -28,10 +28,8 @@ protected:
 
 	void solve();
 	
-	std::thread Thread;
+	std::vector<std::thread> m_Threads;
 
-	bool isValid(std::shared_ptr<MoveInfo>);
-
-	std::map<size_t, std::shared_ptr<MoveInfo>> m_MovesDone;
+	bool isValid(const std::shared_ptr<MoveInfo>& Move, std::map<size_t, std::shared_ptr<MoveInfo>>& MovesDone);
 };
 

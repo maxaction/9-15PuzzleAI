@@ -33,12 +33,12 @@ protected:
 
 	void solve();
 
-	std::thread m_Thread;
+	std::vector<std::thread> m_Threads;
 
-	bool isValid(const std::shared_ptr<MoveInfo>& Move);
+	bool isValid(const std::shared_ptr<MoveInfo>& Move, std::map<size_t, std::shared_ptr<MoveInfo>>& MovesDone);
 
 	int DistanceLeft(BoardInfo& Board);
 
-	std::map<size_t,std::shared_ptr<MoveInfo>> m_MovesDone;
+	
 };
 

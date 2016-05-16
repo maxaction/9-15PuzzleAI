@@ -19,27 +19,26 @@ CAIBreadth::CAIBreadth(CPuzzleGameAIDlg* parent): CAIBase(parent)
 
 CAIBreadth::~CAIBreadth()
 {
-	if(Thread.joinable())
-		Thread.join();
+	for (auto& t : m_Threads)
+	{
+		if (t.joinable())
+			t.join();
+	}
 
 }
 
 void CAIBreadth::Startgame(BoardInfo BoardStart)
 {
 	CAIBase::Startgame(BoardStart);
-	m_MovesDone.clear();
-	std::thread t([&](){solve();});
 
-	if(Thread.joinable())
-		Thread.join();
-
-	Thread.swap(t);
+	m_Threads.push_back(std::thread([&](){solve(); }));
 }
 
 void CAIBreadth::solve()
 {
 	bool bSolved = false;
 	std::queue<std::shared_ptr<MoveInfo>> Q;
+	std::map<size_t, std::shared_ptr<MoveInfo>> MovesDone;
 
 	auto start = std::make_shared<MoveInfo>();
 	start->Board = m_BoardView;
@@ -85,10 +84,10 @@ void CAIBreadth::solve()
 #ifdef TIMING 
 			Tp = CHRONO_NOW;
 #endif
-			if (isValid(move))
+			if (isValid(move, MovesDone))
 			{
 				Q.push(move);
-				m_MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
+				MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
 			}
 #ifdef TIMING 
 			if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
@@ -105,7 +104,7 @@ void CAIBreadth::solve()
 #if defined(TIMING) || defined(TIMING_BASIC)
 
 	_cprintf("Time Taken: %i ms \n", std::chrono::duration_cast<std::chrono::milliseconds>(CHRONO_NOW - TotalTime).count());
-	_cprintf("Moves Done: %i \n", m_MovesDone.size());
+	_cprintf("Moves Done: %i \n", MovesDone.size());
 	_cprintf("Queue Size: %i \n", Q.size());
 #endif
 
@@ -130,17 +129,17 @@ void CAIBreadth::solve()
 	
 }
 
-bool CAIBreadth::isValid(std::shared_ptr<MoveInfo> move)
+bool CAIBreadth::isValid(const std::shared_ptr<MoveInfo>& Move, std::map<size_t, std::shared_ptr<MoveInfo>>& MovesDone)
 {
 	bool bValid = true;
 
 	std::map<size_t, std::shared_ptr<MoveInfo>>::iterator it;
 
-	it = m_MovesDone.find(move->Hash);
+	it = MovesDone.find(Move->Hash);
 
-	if (it != m_MovesDone.end())
+	if (it != MovesDone.end())
 	{
-		if (it->second->Hash == move->Hash)
+		if (it->second->Hash == Move->Hash)
 		{
 			bValid = false;
 		}

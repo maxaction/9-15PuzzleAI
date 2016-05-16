@@ -20,19 +20,17 @@ CAIAStarMan::CAIAStarMan(CPuzzleGameAIDlg* parent) : CAIBase(parent)
 
 CAIAStarMan::~CAIAStarMan()
 {
-	if (m_Thread.joinable())
-		m_Thread.join();
+	for (auto& t : m_Threads)
+	{
+		if (t.joinable())
+			t.join();
+	}
 }
 
 void CAIAStarMan::Startgame(BoardInfo BoardStart)
 {
 	CAIBase::Startgame(BoardStart);
-	std::thread t([&](){solve(); });
-
-	if (m_Thread.joinable())
-		m_Thread.join();
-
-	m_Thread.swap(t);
+	m_Threads.push_back(std::thread([&](){solve(); }));
 
 }
 
@@ -41,6 +39,7 @@ void CAIAStarMan::solve()
 	bool bSolved = false;
 
 	MyQueue Q(Compare);
+	std::map<size_t, std::shared_ptr<MoveInfo>> MovesDone;
 
 	auto start = std::make_shared<MoveInfo>();
 	start->Board = m_BoardView;
@@ -90,17 +89,17 @@ void CAIAStarMan::solve()
 #ifdef TIMING 
 			Tp = CHRONO_NOW;
 #endif
-			if (isValid(move))
+			if (isValid(move, MovesDone))
 			{
 				Q.push(move);
-				m_MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
+				MovesDone.insert(std::pair<size_t, std::shared_ptr<MoveInfo>>(move->Hash, move));
 			}
 #ifdef TIMING 
 			if (CHRONO_DURATION(CHRONO_NOW - Tp).count())
 				_cprintf("isValid %i \n", CHRONO_DURATION(CHRONO_NOW - Tp).count());
 
 
-			_cprintf("m_movesDone %i \n", m_MovesDone.size());
+			_cprintf("MovesDone %i \n", MovesDone.size());
 			_cprintf("Q %i \n", Q.size());
 #endif
 		}
@@ -112,7 +111,7 @@ void CAIAStarMan::solve()
 	}
 #if defined(TIMING) || defined(TIMING_BASIC)
 	_cprintf("Time Taken: %i ms \n", std::chrono::duration_cast<std::chrono::milliseconds>(CHRONO_NOW - TotalTime).count());
-	_cprintf("Moves Done: %i \n", m_MovesDone.size());
+	_cprintf("Moves Done: %i \n", MovesDone.size());
 	_cprintf("Queue Size: %i \n", Q.size());
 #endif
 
@@ -133,26 +132,23 @@ void CAIAStarMan::solve()
 		SendClick(MessageStack.top());
 		MessageStack.pop();
 	}
-
-	m_MovesDone.clear();
-
 }
 
-bool CAIAStarMan::isValid(const std::shared_ptr<MoveInfo>& move)
+bool CAIAStarMan::isValid(const std::shared_ptr<MoveInfo>& move, std::map<size_t, std::shared_ptr<MoveInfo>> & MovesDone)
 {
 	bool bValid = true;
 
 	std::map<size_t, std::shared_ptr<MoveInfo>>::iterator it;
 
-	it = m_MovesDone.find(move->Hash);
+	it = MovesDone.find(move->Hash);
 
-	if (it != m_MovesDone.end())
+	if (it != MovesDone.end())
 	{
 		if (it->second->Hash == move->Hash)
 		{
 			if (move->DistanceGone < it->second->DistanceGone)
 			{
-				m_MovesDone.erase(it);
+				MovesDone.erase(it);
 			}
 			else
 			{

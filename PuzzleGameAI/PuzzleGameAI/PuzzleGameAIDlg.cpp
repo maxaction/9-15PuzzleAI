@@ -16,12 +16,12 @@
 #endif
 
 static const int MAX_SUFFLES = 0;
-static const int MIN_SUFFLES = 25;
+static const int MIN_SUFFLES = 20;
 
 
-const int Worst9[3][3] = { { 8, 6, 7 }, 
-						   { 2, 5, 4 }, 
-						   { 3, 0, 1 } };
+const int Worst9[3][3] = {{ 8, 6, 7 }, 
+						  { 2, 5, 4 }, 
+						  { 3, 0, 1 }};
 
 // CPuzzleGameAIDlg dialog
 
@@ -76,6 +76,10 @@ BOOL CPuzzleGameAIDlg::OnInitDialog()
 
 	OnSizeChange(IDC_SIZE_15);
 
+	m_pAIBreadth = std::make_shared<CAIBreadth>(this);
+
+	m_pAIStar = std::make_shared<CAIAStarMan>(this);
+
 	OnPlayerSelectChange(IDC_PLAYER_HUMAN);
 
 	resetBoard();
@@ -126,11 +130,11 @@ void CPuzzleGameAIDlg::SetPlayerSelectRadio(UINT CtrlID)
 
 			if(ID == IDC_PLAYER_AI_DFS)
 			{
-				m_pAI = std::make_shared<CAIBreadth>(this);
+				m_pAI = m_pAIBreadth;
 			}
 			if (ID == IDC_PLAYER_AI_ASM)
 			{
-				m_pAI = std::make_shared<CAIAStarMan>(this);
+				m_pAI = m_pAIStar;
 			}
 		}
 		else
@@ -464,11 +468,12 @@ void CPuzzleGameAIDlg::StartGame()
 	CButton* pBtn = (CButton*)GetDlgItem(IDC_WORST);
 	if (pBtn && pBtn->GetCheck())
 	{
-		m_boardValues.clear();
 		CButton* pBtn = (CButton*)GetDlgItem(IDC_SIZE_8);
 
 		if (pBtn && pBtn->GetCheck())
 		{
+			m_boardValues.clear();
+		
 			for (int col = 0; col < 3; ++col)
 			{
 				std::vector<int> row;
